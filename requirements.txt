@@ -1,0 +1,11 @@
+streamlit
+pandas
+numpy
+reportlab
+requests
+folium
+streamlit-folium
+plotly
+reportlab
+plotly
+pandas
