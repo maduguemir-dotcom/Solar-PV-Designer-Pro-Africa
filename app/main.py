@@ -50,6 +50,12 @@ from services.design_service import (
 )
 
 
+# PROFESSIONAL ENGINEERING ENGINE (v3 integration)
+from services.professional_design_service import (
+    run_ui_professional_design,
+)
+
+
 # ==========================================================
 # SOLAR DATABASE
 # ==========================================================
@@ -1838,6 +1844,131 @@ if results:
             "carbon_result"
         ]
     )
+
+
+# ==========================================================
+# SECTION 17A - PROFESSIONAL ENGINEERING DESIGN (v3)
+# ==========================================================
+
+st.header("🏗️ Professional Engineering Design")
+st.caption(
+    "v3 engineering engine integration. This adds electrical design and "
+    "engineering validation without removing the existing v2.4 workflow."
+)
+
+professional_col1, professional_col2 = st.columns(2)
+with professional_col1:
+    professional_project_name = st.text_input(
+        "Project Name",
+        value="Solar PV Project",
+        key="professional_project_name",
+    )
+with professional_col2:
+    include_generator = st.checkbox(
+        "Include generator sizing",
+        value=False,
+        key="professional_include_generator",
+    )
+
+if st.button(
+    "🏗️ Run Professional Engineering Design",
+    type="secondary",
+    use_container_width=True,
+    key="run_professional_engineering_design",
+):
+    try:
+        professional_result = run_ui_professional_design(
+            appliance_records=appliance_records,
+            daily_energy_kwh=energy_demand,
+            peak_sun_hours=sun_hours_input,
+            system_voltage_v=system_voltage,
+            system_derating=system_derating,
+            battery_autonomy_days=autonomy_days,
+            battery_dod=depth_of_discharge,
+            battery_efficiency=battery_efficiency,
+            temperature_c=float(
+                st.session_state.get("temperature")
+                if st.session_state.get("temperature") is not None
+                else 25.0
+            ),
+            panel_rating_w=550.0,
+            include_generator=include_generator,
+            project_name=professional_project_name,
+        )
+        st.session_state["professional_design_results"] = professional_result
+        st.success("Professional engineering design completed.")
+    except Exception as error:
+        st.error("Professional engineering design failed.")
+        st.exception(error)
+
+professional_results = st.session_state.get("professional_design_results")
+
+if professional_results:
+    validation = professional_results.get("validation", {})
+    score = professional_results.get("design_quality_score", 0.0)
+    status = professional_results.get("design_status", "REVIEW REQUIRED")
+
+    if status == "PASS":
+        st.success(f"Engineering status: **{status}** — quality score **{score:.1f}/100**")
+    elif status == "PASS WITH WARNINGS":
+        st.warning(f"Engineering status: **{status}** — quality score **{score:.1f}/100**")
+    else:
+        st.error(f"Engineering status: **{status}** — quality score **{score:.1f}/100**")
+
+    load = professional_results.get("load", {})
+    pv = professional_results.get("pv", {})
+    battery = professional_results.get("battery", {})
+    inverter = professional_results.get("inverter", {})
+    electrical = professional_results.get("electrical", {})
+
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Daily Energy", f"{float(load.get('daily_energy_kwh', 0)):.2f} kWh")
+    m2.metric("PV Array", f"{float(pv.get('pv_capacity_kwp', 0)):.2f} kWp")
+    m3.metric("Battery", f"{float(battery.get('nominal_battery_kwh', 0)):.2f} kWh")
+    m4.metric("Inverter", f"{float(inverter.get('recommended_continuous_w', 0))/1000:.2f} kW")
+
+    with st.expander("PV Electrical Configuration", expanded=True):
+        strings = electrical.get("pv_strings", {})
+        st.write({
+            "Required modules": strings.get("required_modules"),
+            "Series modules": strings.get("series_modules"),
+            "Parallel strings": strings.get("parallel_strings"),
+            "Total modules": strings.get("total_modules"),
+            "Actual PV capacity (kWp)": strings.get("actual_pv_kwp"),
+            "Cold string Voc (V)": strings.get("cold_string_voc_v"),
+            "Hot string Vmp (V)": strings.get("hot_string_vmp_v"),
+        })
+
+    with st.expander("Charge Controller, Cables & Protection"):
+        st.json({
+            "charge_controller": electrical.get("charge_controller", {}),
+            "cables": electrical.get("cables", {}),
+            "protection": electrical.get("protection", {}),
+        })
+
+    with st.expander("Battery & System Architecture"):
+        st.json({
+            "battery_electrical": battery.get("electrical_configuration", {}),
+            "generator": professional_results.get("generator", {}),
+            "architecture": professional_results.get("architecture", {}),
+        })
+
+    with st.expander("Engineering Validation & Assumptions"):
+        st.write("### Validation checks")
+        st.dataframe(validation.get("checks", []), use_container_width=True)
+        if validation.get("warnings"):
+            st.warning("Engineering warnings")
+            for warning in validation["warnings"]:
+                st.write(f"• {warning}")
+        if validation.get("errors"):
+            st.error("Engineering review items")
+            for error in validation["errors"]:
+                st.write(f"• {error}")
+        st.write("### Assumptions register")
+        st.dataframe(
+            professional_results.get("assumptions_register", []),
+            use_container_width=True,
+        )
 
 
 # ==========================================================
