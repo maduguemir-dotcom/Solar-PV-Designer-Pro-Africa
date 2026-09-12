@@ -126,7 +126,7 @@ class PlatformRepository:
         sql = f"SELECT * FROM {table}"
         if where:
             sql += f" WHERE {where}"
-        sql += " ORDER BY created_at DESC" if table not in {"organization_members"} else " ORDER BY created_at DESC"
+        sql += " ORDER BY recorded_at DESC" if table == "usage_records" else " ORDER BY created_at DESC"
         with self.db.connect() as conn:
             rows = conn.execute(sql, params).fetchall()
         return [dict(row) for row in rows]
