@@ -85,10 +85,23 @@ def run_ui_professional_design(
     panel_rating_w: float = 550.0,
     include_generator: bool = False,
     project_name: str = "Solar PV Project",
+    equipment_selection: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     loads = build_engineering_loads(appliance_records, daily_energy_kwh)
     if not loads:
         raise ValueError("No usable electrical load was provided.")
+
+    # Defaults remain available for the legacy/fallback workflow. When a
+    # validated Product Library selection is supplied, use its actual
+    # electrical specifications in the engineering calculation.
+    selected = (equipment_selection or {}).get("selected", {}) if isinstance(equipment_selection, Mapping) else {}
+    pv_spec = selected.get("pv_module", {}).get("spec") if isinstance(selected.get("pv_module"), Mapping) else None
+    battery_spec = selected.get("battery", {}).get("spec") if isinstance(selected.get("battery"), Mapping) else None
+    inverter_spec = selected.get("inverter", {}).get("spec") if isinstance(selected.get("inverter"), Mapping) else None
+    cc_spec = selected.get("charge_controller", {}).get("spec") if isinstance(selected.get("charge_controller"), Mapping) else None
+
+    if equipment_selection is not None and not equipment_selection.get("valid", False):
+        raise ValueError("Selected equipment has not passed compatibility validation.")
 
     return run_validated_professional_design(
         loads,
@@ -97,16 +110,18 @@ def run_ui_professional_design(
         system_derating=system_derating,
         design_margin=1.10,
         battery_autonomy_days=battery_autonomy_days,
-        battery_dod=battery_dod,
-        battery_efficiency=battery_efficiency,
-        panel_rating_w=panel_rating_w,
+        battery_dod=min(battery_dod, float(getattr(battery_spec, "recommended_dod", battery_dod))) if battery_spec else battery_dod,
+        battery_efficiency=min(battery_efficiency, float(getattr(battery_spec, "round_trip_efficiency", battery_efficiency))) if battery_spec else battery_efficiency,
+        panel_rating_w=float(getattr(pv_spec, "power_w", panel_rating_w)),
         temperature_c=temperature_c,
-        module_voc_v=49.5,
-        module_vmp_v=41.5,
-        module_isc_a=14.0,
-        module_imp_a=13.3,
-        controller_max_pv_voltage_v=150.0,
-        controller_min_mppt_voltage_v=60.0,
+        module_voc_v=float(getattr(pv_spec, "voc_v", 49.5)),
+        module_vmp_v=float(getattr(pv_spec, "vmp_v", 41.5)),
+        module_isc_a=float(getattr(pv_spec, "isc_a", 14.0)),
+        module_imp_a=float(getattr(pv_spec, "imp_a", 13.3)),
+        controller_max_pv_voltage_v=float(getattr(cc_spec, "max_pv_voltage_v", getattr(inverter_spec, "mppt_voltage_max_v", 150.0))),
+        controller_min_mppt_voltage_v=float(getattr(cc_spec, "min_mppt_voltage_v", getattr(inverter_spec, "mppt_voltage_min_v", 60.0))),
+        battery_unit_voltage_v=float(getattr(battery_spec, "nominal_voltage_v", system_voltage_v)) if battery_spec else None,
+        battery_unit_capacity_ah=float(getattr(battery_spec, "capacity_ah", 0.0)) if battery_spec else None,
         pv_cable_length_m=20.0,
         battery_cable_length_m=3.0,
         ac_cable_length_m=20.0,
