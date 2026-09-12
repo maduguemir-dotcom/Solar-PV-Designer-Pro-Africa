@@ -57,6 +57,7 @@ from services.professional_design_service import (
 
 # PROFESSIONAL EQUIPMENT SELECTION (v3.0 Stage 3D)
 from ui.equipment_selection import render_engineering_equipment_selector
+from ui.project_management import render_project_management_ui
 
 
 # ==========================================================
@@ -393,6 +394,8 @@ app_page = st.sidebar.radio(
 
         "☀️ Solar PV Designer",
 
+        "👥 Customers & Projects",
+
         "📦 Product Library",
 
         "🛠️ Product Management",
@@ -404,6 +407,24 @@ app_page = st.sidebar.radio(
     key="main_application_navigation",
 
 )
+
+
+# ==========================================================
+# SECTION 7 - CUSTOMERS & PROJECTS PAGE
+# ==========================================================
+
+if app_page == "👥 Customers & Projects":
+
+    try:
+
+        render_project_management_ui()
+
+    except Exception as error:
+
+        st.error("The Customers & Projects module encountered an error.")
+        st.exception(error)
+
+    st.stop()
 
 
 # ==========================================================
