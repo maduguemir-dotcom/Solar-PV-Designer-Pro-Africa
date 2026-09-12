@@ -55,6 +55,9 @@ from services.professional_design_service import (
     run_ui_professional_design,
 )
 
+# PROFESSIONAL EQUIPMENT SELECTION (v3.0 Stage 3D)
+from ui.equipment_selection import render_engineering_equipment_selector
+
 
 # ==========================================================
 # SOLAR DATABASE
@@ -1847,6 +1850,34 @@ if results:
 
 
 # ==========================================================
+# SECTION 17 - PROFESSIONAL EQUIPMENT SELECTION (v3.0)
+# ==========================================================
+
+st.header("🧰 Professional Equipment Selection")
+st.caption(
+    "Select engineering-ready equipment from the central Product Library "
+    "before running the professional design."
+)
+
+selected_equipment_result = render_engineering_equipment_selector(
+    st,
+    system_voltage_v=system_voltage,
+)
+
+if selected_equipment_result is not None:
+    st.session_state["professional_selected_equipment"] = selected_equipment_result
+    if selected_equipment_result.get("valid"):
+        st.success("Selected equipment passed compatibility validation.")
+    else:
+        st.error("Selected equipment requires engineering review before use.")
+    if selected_equipment_result.get("errors"):
+        for error in selected_equipment_result["errors"]:
+            st.write(f"• {error}")
+    if selected_equipment_result.get("warnings"):
+        for warning in selected_equipment_result["warnings"]:
+            st.warning(warning)
+
+# ==========================================================
 # SECTION 17A - PROFESSIONAL ENGINEERING DESIGN (v3)
 # ==========================================================
 
@@ -1894,6 +1925,7 @@ if st.button(
             panel_rating_w=550.0,
             include_generator=include_generator,
             project_name=professional_project_name,
+            equipment_selection=st.session_state.get("professional_selected_equipment"),
         )
         st.session_state["professional_design_results"] = professional_result
         st.success("Professional engineering design completed.")
