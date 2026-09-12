@@ -114,6 +114,45 @@ class PlatformRepository:
             )
         return usage_id
 
+    def list_records(self, table: str, where: str = "", params: tuple = ()) -> list[dict[str, Any]]:
+        """Return records from an allow-listed platform table.
+
+        ``where`` is intentionally caller-supplied only by internal application
+        code; values belong in ``params`` so user input is never interpolated.
+        """
+        allowed = {"users", "organizations", "organization_members", "customers", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records"}
+        if table not in allowed:
+            raise ValueError(f"Unsupported table: {table}")
+        sql = f"SELECT * FROM {table}"
+        if where:
+            sql += f" WHERE {where}"
+        sql += " ORDER BY created_at DESC" if table not in {"organization_members"} else " ORDER BY created_at DESC"
+        with self.db.connect() as conn:
+            rows = conn.execute(sql, params).fetchall()
+        return [dict(row) for row in rows]
+
+    def update_record(self, table: str, record_id: str, fields: dict[str, Any]) -> None:
+        """Update a small allow-listed platform record."""
+        allowed = {"users", "organizations", "customers", "projects", "designs", "subscriptions"}
+        if table not in allowed:
+            raise ValueError(f"Unsupported update table: {table}")
+        if not fields:
+            return
+        allowed_fields = {
+            "users": {"email", "full_name", "status"},
+            "organizations": {"name", "status"},
+            "customers": {"name", "email", "phone", "address", "notes"},
+            "projects": {"customer_id", "name", "status", "location", "notes"},
+            "designs": {"name", "status", "engine_version"},
+            "subscriptions": {"plan_code", "status"},
+        }
+        if any(key not in allowed_fields[table] for key in fields):
+            raise ValueError("Unsupported or protected field in update")
+        assignments = ", ".join(f"{key}=?" for key in fields)
+        values = list(fields.values()) + [record_id]
+        with self.db.connect() as conn:
+            conn.execute(f"UPDATE {table} SET {assignments}, updated_at=CURRENT_TIMESTAMP WHERE id=?", values)
+
     def get_one(self, table: str, record_id: str) -> Optional[dict[str, Any]]:
         allowed = {"users", "organizations", "customers", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records"}
         if table not in allowed:
