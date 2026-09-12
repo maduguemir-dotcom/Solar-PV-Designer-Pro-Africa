@@ -58,6 +58,7 @@ from services.professional_design_service import (
 # PROFESSIONAL EQUIPMENT SELECTION (v3.0 Stage 3D)
 from ui.equipment_selection import render_engineering_equipment_selector
 from ui.project_management import render_project_management_ui
+from ui.design_persistence import render_design_persistence_ui
 
 
 # ==========================================================
@@ -1955,6 +1956,13 @@ if st.button(
         st.exception(error)
 
 professional_results = st.session_state.get("professional_design_results")
+
+if professional_results:
+    with st.expander("💾 Save to Customer Project & Design History", expanded=False):
+        render_design_persistence_ui(
+            professional_results,
+            st.session_state.get("professional_selected_equipment"),
+        )
 
 if professional_results:
     validation = professional_results.get("validation", {})
