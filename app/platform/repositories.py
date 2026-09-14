@@ -105,6 +105,38 @@ class PlatformRepository:
             )
         return result_id
 
+    def get_subscription(self, organization_id: str) -> Optional[dict[str, Any]]:
+        with self.db.connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM subscriptions WHERE organization_id=? ORDER BY created_at DESC LIMIT 1",
+                (organization_id,),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def create_subscription(self, organization_id: str, plan_code: str = "free", status: str = "active", subscription_id: Optional[str] = None) -> str:
+        subscription_id = subscription_id or new_id("sub")
+        with self.db.connect() as conn:
+            conn.execute(
+                "INSERT INTO subscriptions(id,organization_id,plan_code,status) VALUES(?,?,?,?)",
+                (subscription_id, organization_id, plan_code, status),
+            )
+        return subscription_id
+
+    def update_subscription_for_org(self, organization_id: str, plan_code: str, status: str = "active") -> None:
+        with self.db.connect() as conn:
+            conn.execute(
+                "UPDATE subscriptions SET plan_code=?, status=?, updated_at=CURRENT_TIMESTAMP WHERE organization_id=?",
+                (plan_code, status, organization_id),
+            )
+
+    def usage_since(self, organization_id: str, metric: str, since: str) -> int:
+        with self.db.connect() as conn:
+            row = conn.execute(
+                "SELECT COALESCE(SUM(quantity),0) AS total FROM usage_records WHERE organization_id=? AND metric=? AND recorded_at>=?",
+                (organization_id, metric, since),
+            ).fetchone()
+        return int(row["total"] if row else 0)
+
     def record_usage(self, organization_id: str, metric: str, quantity: int = 1, usage_id: Optional[str] = None) -> str:
         usage_id = usage_id or new_id("use")
         with self.db.connect() as conn:
@@ -183,3 +215,34 @@ class PlatformRepository:
         with self.db.connect() as conn:
             row = conn.execute(f"SELECT * FROM {table} WHERE {id_column}=?", (record_id,)).fetchone()
         return dict(row) if row else None
+
+# Stage 5A authentication helpers
+    def find_user_by_email(self, email: str) -> Optional[dict[str, Any]]:
+        with self.db.connect() as conn:
+            row = conn.execute("SELECT * FROM users WHERE email=?", (email.strip().lower(),)).fetchone()
+        return dict(row) if row else None
+
+    def set_password_hash(self, user_id: str, password_hash: str) -> None:
+        with self.db.connect() as conn:
+            conn.execute("UPDATE users SET password_hash=?, updated_at=CURRENT_TIMESTAMP WHERE id=?", (password_hash, user_id))
+
+    def set_email_verified(self, user_id: str, verified: bool = True) -> None:
+        with self.db.connect() as conn:
+            conn.execute("UPDATE users SET email_verified=?, updated_at=CURRENT_TIMESTAMP WHERE id=?", (1 if verified else 0, user_id))
+
+    def mark_login(self, user_id: str) -> None:
+        with self.db.connect() as conn:
+            conn.execute("UPDATE users SET last_login_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id=?", (user_id,))
+
+    def memberships_for_user(self, user_id: str) -> list[dict[str, Any]]:
+        with self.db.connect() as conn:
+            rows = conn.execute("SELECT * FROM organization_members WHERE user_id=? AND status='active' ORDER BY created_at", (user_id,)).fetchall()
+        return [dict(row) for row in rows]
+
+    def organizations_for_user(self, user_id: str) -> list[dict[str, Any]]:
+        with self.db.connect() as conn:
+            rows = conn.execute(
+                "SELECT o.*, m.role AS member_role FROM organizations o JOIN organization_members m ON m.organization_id=o.id WHERE m.user_id=? AND m.status='active' ORDER BY o.created_at",
+                (user_id,),
+            ).fetchall()
+        return [dict(row) for row in rows]

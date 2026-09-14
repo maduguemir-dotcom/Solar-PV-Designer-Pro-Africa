@@ -26,6 +26,17 @@ class PlatformDatabase:
     def initialize(self) -> None:
         with self.connect() as conn:
             conn.executescript(SCHEMA_SQL)
+            # Lightweight migration for databases created during Stage 4.
+            columns = {row["name"] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
+            if "password_hash" not in columns:
+                conn.execute("ALTER TABLE users ADD COLUMN password_hash TEXT")
+            if "email_verified" not in columns:
+                conn.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0")
+            if "last_login_at" not in columns:
+                conn.execute("ALTER TABLE users ADD COLUMN last_login_at TEXT")
+            # Stage 5B keeps the existing subscription/usage tables and adds
+            # an index useful for monthly entitlement checks.
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_usage_org_metric_date ON usage_records(organization_id, metric, recorded_at)")
             conn.execute(
                 "INSERT INTO schema_meta(key, value) VALUES(?, ?) "
                 "ON CONFLICT(key) DO UPDATE SET value=excluded.value",

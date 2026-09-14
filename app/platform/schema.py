@@ -4,7 +4,7 @@ The platform database is deliberately separate from the Product Library
 SQLite database. Product records are referenced by ID, not duplicated here.
 """
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 3
 
 SCHEMA_SQL = """
 PRAGMA foreign_keys = ON;
@@ -19,6 +19,9 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT NOT NULL UNIQUE,
     full_name TEXT NOT NULL DEFAULT '',
     status TEXT NOT NULL DEFAULT 'active',
+    password_hash TEXT,
+    email_verified INTEGER NOT NULL DEFAULT 0,
+    last_login_at TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -30,6 +33,15 @@ CREATE TABLE IF NOT EXISTS organizations (
     status TEXT NOT NULL DEFAULT 'active',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS auth_sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TEXT,
+    revoked_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS organization_members (
@@ -124,6 +136,8 @@ CREATE TABLE IF NOT EXISTS usage_records (
 );
 
 CREATE INDEX IF NOT EXISTS idx_org_members_user ON organization_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_user ON auth_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_org ON auth_sessions(organization_id);
 CREATE INDEX IF NOT EXISTS idx_customers_org ON customers(organization_id);
 CREATE INDEX IF NOT EXISTS idx_projects_org ON projects(organization_id);
 CREATE INDEX IF NOT EXISTS idx_projects_customer ON projects(customer_id);
@@ -132,4 +146,5 @@ CREATE INDEX IF NOT EXISTS idx_equipment_design ON design_equipment(design_id);
 CREATE INDEX IF NOT EXISTS idx_results_design ON design_results(design_id);
 CREATE INDEX IF NOT EXISTS idx_reports_design ON reports(design_id);
 CREATE INDEX IF NOT EXISTS idx_usage_org_metric ON usage_records(organization_id, metric);
+CREATE INDEX IF NOT EXISTS idx_usage_org_metric_date ON usage_records(organization_id, metric, recorded_at);
 """
