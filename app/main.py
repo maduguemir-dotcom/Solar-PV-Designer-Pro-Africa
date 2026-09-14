@@ -60,6 +60,7 @@ from ui.equipment_selection import render_engineering_equipment_selector
 from ui.project_management import render_project_management_ui
 from ui.design_persistence import render_design_persistence_ui
 from ui.report_management import render_professional_report_ui
+from ui.dashboard import render_dashboard_ui
 
 
 # ==========================================================
@@ -394,6 +395,8 @@ app_page = st.sidebar.radio(
 
     [
 
+        "🏠 Dashboard",
+
         "☀️ Solar PV Designer",
 
         "👥 Customers & Projects",
@@ -412,7 +415,25 @@ app_page = st.sidebar.radio(
 
 
 # ==========================================================
-# SECTION 7 - CUSTOMERS & PROJECTS PAGE
+# SECTION 7 - PROFESSIONAL DASHBOARD PAGE
+# ==========================================================
+
+if app_page == "🏠 Dashboard":
+
+    try:
+
+        render_dashboard_ui()
+
+    except Exception as error:
+
+        st.error("The Professional Dashboard encountered an error.")
+        st.exception(error)
+
+    st.stop()
+
+
+# ==========================================================
+# SECTION 8 - CUSTOMERS & PROJECTS PAGE
 # ==========================================================
 
 if app_page == "👥 Customers & Projects":
