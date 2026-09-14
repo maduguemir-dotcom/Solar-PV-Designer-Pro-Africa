@@ -47,6 +47,9 @@ class AuthService:
         else:
             org_id = self.repository.create_organization(organization_name, user_id)
         self.repository.set_email_verified(user_id, False)
+        # Stage 5B: every organization enters the commercial model on FREE.
+        if not self.repository.get_subscription(org_id):
+            self.repository.create_subscription(org_id, "free", "active")
         return {"user_id": user_id, "organization_id": org_id}
 
     def authenticate(self, email: str, password: str) -> Optional[dict[str, str]]:
