@@ -61,6 +61,7 @@ from ui.project_management import render_project_management_ui
 from ui.design_persistence import render_design_persistence_ui
 from ui.report_management import render_professional_report_ui
 from ui.dashboard import render_dashboard_ui
+from auth.ui import render_auth_gate, render_authenticated_sidebar
 
 
 # ==========================================================
@@ -383,6 +384,16 @@ with st.sidebar.expander(
         st.error(
             "❌ Product Management"
         )
+
+
+# ==========================================================
+# SECTION 5A - AUTHENTICATION & ORGANIZATION CONTEXT
+# ==========================================================
+
+# Authentication is enforced before the commercial workspace navigation.
+# Product/engineering modules remain unchanged behind this access boundary.
+render_auth_gate()
+render_authenticated_sidebar()
 
 
 # ==========================================================
