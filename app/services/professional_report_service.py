@@ -14,6 +14,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 
 from app.platform.database import PlatformDatabase
 from app.platform.repositories import PlatformRepository
+from app.services.subscription_service import SubscriptionService
 
 
 class ProfessionalReportService:
@@ -22,6 +23,7 @@ class ProfessionalReportService:
     def __init__(self, database: Optional[PlatformDatabase] = None):
         self.database = database or PlatformDatabase()
         self.repository = PlatformRepository(self.database)
+        self.subscription = SubscriptionService(self.database)
 
     @staticmethod
     def _num(value: Any, default: float = 0.0) -> float:
@@ -166,6 +168,7 @@ class ProfessionalReportService:
         report_id = None
         file_path = ""
         if persist:
+            self.subscription.require_limit(organization_id, "professional_reports_generated")
             report_id = self.repository.create_report(design_id, "engineering", status="generated")
             report_dir = Path(__file__).resolve().parents[1] / "reports"
             report_dir.mkdir(parents=True, exist_ok=True)
