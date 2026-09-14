@@ -17,7 +17,11 @@ DEMO_ORG_NAME = "My Solar Design Workspace"
 
 
 def _ensure_workspace(repo: PlatformRepository) -> str:
-    """Create a safe local workspace for Stage 4B before authentication exists."""
+    """Return the authenticated organization; retain legacy fallback for tests."""
+    org_id = st.session_state.get("current_organization_id")
+    if org_id and repo.get_one("organizations", org_id):
+        return org_id
+    # Legacy Stage 4 fallback is intentionally retained for isolated tests.
     if not repo.get_one("users", DEMO_USER_ID):
         repo.create_user(DEMO_EMAIL, "Workspace User", DEMO_USER_ID)
     if not repo.get_one("organizations", DEMO_ORG_ID):
