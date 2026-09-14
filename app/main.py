@@ -62,6 +62,7 @@ from ui.design_persistence import render_design_persistence_ui
 from ui.report_management import render_professional_report_ui
 from ui.dashboard import render_dashboard_ui
 from auth.ui import render_auth_gate, render_authenticated_sidebar
+from ui.subscription import render_subscription_ui
 
 
 # ==========================================================
@@ -418,6 +419,8 @@ app_page = st.sidebar.radio(
 
         "💰 Cost Diary",
 
+        "💳 Plans & Usage",
+
     ],
 
     key="main_application_navigation",
@@ -553,6 +556,18 @@ if app_page == "🛠️ Product Management":
 # ==========================================================
 # SECTION 9 - COST DIARY PAGE
 # ==========================================================
+
+if app_page == "💳 Plans & Usage":
+
+    try:
+
+        render_subscription_ui()
+
+    except Exception as error:
+
+        st.error("The Plans & Usage module encountered an error.")
+        st.exception(error)
+
 
 if app_page == "💰 Cost Diary":
 
