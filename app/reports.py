@@ -27,7 +27,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 # SECTION 2 - PDF REPORT GENERATOR
 # ==========================================================
 
-def create_pdf_report(data, recommendations):
+def create_pdf_report(data, recommendations=None):
     """
     Generate a professional solar PV design report.
 
@@ -366,7 +366,7 @@ def create_pdf_report(data, recommendations):
     )
 
 
-    for recommendation in recommendations:
+    for recommendation in (recommendations or []):
 
         content.append(
             Paragraph(
