@@ -9,6 +9,7 @@ import streamlit as st
 from app.platform.database import PlatformDatabase
 from app.platform.repositories import PlatformRepository
 from app.services.project_service import ProjectService
+from app.services.subscription_service import SubscriptionService, UsageLimitError
 
 DEMO_USER_ID = "usr_local_workspace"
 DEMO_EMAIL = "workspace@solar-pv-designer.local"
@@ -38,6 +39,7 @@ def render_project_management_ui() -> None:
     db = PlatformDatabase()
     repo = PlatformRepository(db)
     service = ProjectService(db)
+    subscription = SubscriptionService(db)
     org_id = _ensure_workspace(repo)
 
     st.title("👥 Customers & Projects")
@@ -69,9 +71,14 @@ def render_project_management_ui() -> None:
                 if not name.strip():
                     st.error("Customer name is required.")
                 else:
-                    repo.create_customer(org_id, name, email, phone, address, notes)
-                    st.success("Customer created successfully.")
-                    st.rerun()
+                    try:
+                        subscription.require_limit(org_id, "customers")
+                        repo.create_customer(org_id, name, email, phone, address, notes)
+                        subscription.repository.record_usage(org_id, "customers", 1)
+                        st.success("Customer created successfully.")
+                        st.rerun()
+                    except UsageLimitError as exc:
+                        st.warning(str(exc))
 
         if customers:
             customer_rows = [{
@@ -96,13 +103,18 @@ def render_project_management_ui() -> None:
                 if not project_name.strip():
                     st.error("Project name is required.")
                 else:
-                    project_id = repo.create_project(
-                        org_id, project_name, customer_options[customer_label], location, notes
-                    )
-                    if status != "draft":
-                        repo.update_record("projects", project_id, {"status": status})
-                    st.success(f"Project created: {project_name}")
-                    st.rerun()
+                    try:
+                        subscription.require_limit(org_id, "projects")
+                        project_id = repo.create_project(
+                            org_id, project_name, customer_options[customer_label], location, notes
+                        )
+                        if status != "draft":
+                            repo.update_record("projects", project_id, {"status": status})
+                        subscription.repository.record_usage(org_id, "projects", 1)
+                        st.success(f"Project created: {project_name}")
+                        st.rerun()
+                    except UsageLimitError as exc:
+                        st.warning(str(exc))
 
         if projects:
             project_rows = []
@@ -138,10 +150,14 @@ def render_project_management_ui() -> None:
                     if not design_name.strip():
                         st.error("Design name is required.")
                     else:
-                        design_id = service.create_design(selected_project_id, design_name, engine_version)
-                        service.record_design_usage(org_id, "design_versions_created")
-                        st.success(f"Design version created: {design_id[-12:]}")
-                        st.rerun()
+                        try:
+                            subscription.require_limit(org_id, "design_versions_created")
+                            design_id = service.create_design(selected_project_id, design_name, engine_version)
+                            subscription.repository.record_usage(org_id, "design_versions_created", 1)
+                            st.success(f"Design version created: {design_id[-12:]}")
+                            st.rerun()
+                        except UsageLimitError as exc:
+                            st.warning(str(exc))
 
             if project_designs:
                 rows = [{
