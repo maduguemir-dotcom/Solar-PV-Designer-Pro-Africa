@@ -153,6 +153,28 @@ class PlatformRepository:
         with self.db.connect() as conn:
             conn.execute(f"UPDATE {table} SET {assignments}, updated_at=CURRENT_TIMESTAMP WHERE id=?", values)
 
+
+    def create_report(self, design_id: str, report_type: str = "engineering", status: str = "generated", report_id: Optional[str] = None) -> str:
+        report_id = report_id or new_id("rpt")
+        with self.db.connect() as conn:
+            conn.execute(
+                "INSERT INTO reports(id,design_id,report_type,status) VALUES(?,?,?,?)",
+                (report_id, design_id, report_type, status),
+            )
+        return report_id
+
+    def update_report(self, report_id: str, *, file_path: Optional[str] = None, status: Optional[str] = None) -> None:
+        fields = {}
+        if file_path is not None:
+            fields["file_path"] = file_path
+        if status is not None:
+            fields["status"] = status
+        if not fields:
+            return
+        assignments = ", ".join(f"{key}=?" for key in fields)
+        with self.db.connect() as conn:
+            conn.execute(f"UPDATE reports SET {assignments} WHERE id=?", list(fields.values()) + [report_id])
+
     def get_one(self, table: str, record_id: str) -> Optional[dict[str, Any]]:
         allowed = {"users", "organizations", "customers", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records"}
         if table not in allowed:
