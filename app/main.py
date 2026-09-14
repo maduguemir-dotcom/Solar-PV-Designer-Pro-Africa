@@ -59,6 +59,7 @@ from services.professional_design_service import (
 from ui.equipment_selection import render_engineering_equipment_selector
 from ui.project_management import render_project_management_ui
 from ui.design_persistence import render_design_persistence_ui
+from ui.report_management import render_professional_report_ui
 
 
 # ==========================================================
@@ -2030,6 +2031,14 @@ if professional_results:
             professional_results.get("assumptions_register", []),
             use_container_width=True,
         )
+
+
+# ==========================================================
+# SECTION 17B - SAVED DESIGN REPORTS (v3.0 Stage 4D)
+# ==========================================================
+
+with st.expander("📄 Generate Report from Saved Professional Design", expanded=False):
+    render_professional_report_ui()
 
 
 # ==========================================================
