@@ -4,7 +4,7 @@ The platform database is deliberately separate from the Product Library
 SQLite database. Product records are referenced by ID, not duplicated here.
 """
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 SCHEMA_SQL = """
 PRAGMA foreign_keys = ON;
@@ -127,6 +127,26 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS billing_events (
+    id TEXT PRIMARY KEY,
+    organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    event_type TEXT NOT NULL,
+    provider_event_id TEXT NOT NULL UNIQUE,
+    payload_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS billing_checkout_sessions (
+    id TEXT PRIMARY KEY,
+    organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    plan_code TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    provider TEXT NOT NULL DEFAULT 'placeholder',
+    provider_session_id TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS usage_records (
     id TEXT PRIMARY KEY,
     organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -145,6 +165,8 @@ CREATE INDEX IF NOT EXISTS idx_designs_project ON designs(project_id);
 CREATE INDEX IF NOT EXISTS idx_equipment_design ON design_equipment(design_id);
 CREATE INDEX IF NOT EXISTS idx_results_design ON design_results(design_id);
 CREATE INDEX IF NOT EXISTS idx_reports_design ON reports(design_id);
+CREATE INDEX IF NOT EXISTS idx_billing_events_org ON billing_events(organization_id);
+CREATE INDEX IF NOT EXISTS idx_billing_checkout_org ON billing_checkout_sessions(organization_id);
 CREATE INDEX IF NOT EXISTS idx_usage_org_metric ON usage_records(organization_id, metric);
 CREATE INDEX IF NOT EXISTS idx_usage_org_metric_date ON usage_records(organization_id, metric, recorded_at);
 """

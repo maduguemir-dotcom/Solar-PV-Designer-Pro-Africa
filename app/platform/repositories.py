@@ -129,6 +129,30 @@ class PlatformRepository:
                 (plan_code, status, organization_id),
             )
 
+    def create_billing_event(self, organization_id: str, event_type: str, provider_event_id: str, payload: Optional[dict] = None, event_id: Optional[str] = None) -> str:
+        event_id = event_id or new_id("bev")
+        with self.db.connect() as conn:
+            conn.execute(
+                "INSERT INTO billing_events(id,organization_id,event_type,provider_event_id,payload_json) VALUES(?,?,?,?,?)",
+                (event_id, organization_id, event_type, provider_event_id, json.dumps(payload or {}, sort_keys=True)),
+            )
+        return event_id
+
+    def billing_event_exists(self, provider_event_id: str) -> bool:
+        with self.db.connect() as conn:
+            row = conn.execute("SELECT 1 FROM billing_events WHERE provider_event_id=? LIMIT 1", (provider_event_id,)).fetchone()
+        return row is not None
+
+    def create_checkout_session(self, organization_id: str, plan_code: str, provider: str = "placeholder",
+                                provider_session_id: Optional[str] = None, session_id: Optional[str] = None) -> str:
+        session_id = session_id or new_id("chk")
+        with self.db.connect() as conn:
+            conn.execute(
+                "INSERT INTO billing_checkout_sessions(id,organization_id,plan_code,status,provider,provider_session_id) VALUES(?,?,?,?,?,?)",
+                (session_id, organization_id, plan_code, "pending", provider, provider_session_id),
+            )
+        return session_id
+
     def usage_since(self, organization_id: str, metric: str, since: str) -> int:
         with self.db.connect() as conn:
             row = conn.execute(
@@ -152,7 +176,7 @@ class PlatformRepository:
         ``where`` is intentionally caller-supplied only by internal application
         code; values belong in ``params`` so user input is never interpolated.
         """
-        allowed = {"users", "organizations", "organization_members", "customers", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records"}
+        allowed = {"users", "organizations", "organization_members", "customers", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records", "billing_events", "billing_checkout_sessions"}
         if table not in allowed:
             raise ValueError(f"Unsupported table: {table}")
         sql = f"SELECT * FROM {table}"
@@ -208,7 +232,7 @@ class PlatformRepository:
             conn.execute(f"UPDATE reports SET {assignments} WHERE id=?", list(fields.values()) + [report_id])
 
     def get_one(self, table: str, record_id: str) -> Optional[dict[str, Any]]:
-        allowed = {"users", "organizations", "customers", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records"}
+        allowed = {"users", "organizations", "customers", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records", "billing_events", "billing_checkout_sessions"}
         if table not in allowed:
             raise ValueError(f"Unsupported table: {table}")
         id_column = "id"
