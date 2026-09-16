@@ -54,21 +54,30 @@ class PlatformRepository:
                 (organization_id, user_id, role, "active"),
             )
 
-    def create_customer(self, organization_id: str, name: str, email: str = "", phone: str = "", address: str = "", notes: str = "", customer_id: Optional[str] = None) -> str:
+    def create_customer(self, organization_id: str, name: str, email: str = "", phone: str = "", address: str = "", notes: str = "", customer_type: str = "individual", contact_person: str = "", customer_id: Optional[str] = None) -> str:
         customer_id = customer_id or new_id("cus")
         with self.db.connect() as conn:
             conn.execute(
-                "INSERT INTO customers(id,organization_id,name,email,phone,address,notes) VALUES(?,?,?,?,?,?,?)",
-                (customer_id, organization_id, name.strip(), email.strip(), phone.strip(), address.strip(), notes.strip()),
+                "INSERT INTO customers(id,organization_id,name,email,phone,address,notes,customer_type,contact_person) VALUES(?,?,?,?,?,?,?,?,?)",
+                (customer_id, organization_id, name.strip(), email.strip(), phone.strip(), address.strip(), notes.strip(), customer_type.strip() or "individual", contact_person.strip()),
             )
         return customer_id
 
-    def create_project(self, organization_id: str, name: str, customer_id: Optional[str] = None, location: str = "", notes: str = "", project_id: Optional[str] = None) -> str:
+    def create_site(self, organization_id: str, name: str, customer_id: Optional[str] = None, address: str = "", latitude: Optional[float] = None, longitude: Optional[float] = None, notes: str = "", site_id: Optional[str] = None) -> str:
+        site_id = site_id or new_id("site")
+        with self.db.connect() as conn:
+            conn.execute(
+                "INSERT INTO sites(id,organization_id,customer_id,name,address,latitude,longitude,notes) VALUES(?,?,?,?,?,?,?,?)",
+                (site_id, organization_id, customer_id, name.strip(), address.strip(), latitude, longitude, notes.strip()),
+            )
+        return site_id
+
+    def create_project(self, organization_id: str, name: str, customer_id: Optional[str] = None, location: str = "", notes: str = "", project_id: Optional[str] = None, site_id: Optional[str] = None) -> str:
         project_id = project_id or new_id("prj")
         with self.db.connect() as conn:
             conn.execute(
-                "INSERT INTO projects(id,organization_id,customer_id,name,location,notes) VALUES(?,?,?,?,?,?)",
-                (project_id, organization_id, customer_id, name.strip(), location.strip(), notes.strip()),
+                "INSERT INTO projects(id,organization_id,customer_id,site_id,name,location,notes) VALUES(?,?,?,?,?,?,?)",
+                (project_id, organization_id, customer_id, site_id, name.strip(), location.strip(), notes.strip()),
             )
         return project_id
 
@@ -185,7 +194,7 @@ class PlatformRepository:
         ``where`` is intentionally caller-supplied only by internal application
         code; values belong in ``params`` so user input is never interpolated.
         """
-        allowed = {"users", "organizations", "organization_members", "customers", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records", "billing_events", "billing_checkout_sessions"}
+        allowed = {"users", "organizations", "organization_members", "customers", "sites", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records", "billing_events", "billing_checkout_sessions"}
         if table not in allowed:
             raise ValueError(f"Unsupported table: {table}")
         sql = f"SELECT * FROM {table}"
@@ -198,7 +207,7 @@ class PlatformRepository:
 
     def update_record(self, table: str, record_id: str, fields: dict[str, Any]) -> None:
         """Update a small allow-listed platform record."""
-        allowed = {"users", "organizations", "customers", "projects", "designs", "subscriptions"}
+        allowed = {"users", "organizations", "customers", "sites", "projects", "designs", "subscriptions"}
         if table not in allowed:
             raise ValueError(f"Unsupported update table: {table}")
         if not fields:
@@ -206,7 +215,8 @@ class PlatformRepository:
         allowed_fields = {
             "users": {"email", "full_name", "status"},
             "organizations": {"name", "status"},
-            "customers": {"name", "email", "phone", "address", "notes"},
+            "customers": {"name", "email", "phone", "address", "notes", "customer_type", "contact_person"},
+            "sites": {"customer_id", "name", "address", "latitude", "longitude", "notes"},
             "projects": {"customer_id", "name", "status", "location", "notes"},
             "designs": {"name", "status", "engine_version"},
             "subscriptions": {"plan_code", "status"},
@@ -241,7 +251,7 @@ class PlatformRepository:
             conn.execute(f"UPDATE reports SET {assignments} WHERE id=?", list(fields.values()) + [report_id])
 
     def get_one(self, table: str, record_id: str) -> Optional[dict[str, Any]]:
-        allowed = {"users", "organizations", "customers", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records", "billing_events", "billing_checkout_sessions"}
+        allowed = {"users", "organizations", "customers", "sites", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records", "billing_events", "billing_checkout_sessions"}
         if table not in allowed:
             raise ValueError(f"Unsupported table: {table}")
         id_column = "id"

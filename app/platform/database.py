@@ -41,6 +41,17 @@ class PlatformDatabase:
                 conn.execute("ALTER TABLE subscriptions ADD COLUMN provider_subscription_id TEXT")
             if "current_period_end" not in sub_columns:
                 conn.execute("ALTER TABLE subscriptions ADD COLUMN current_period_end TEXT")
+            # Stage 6A migrations: commercial customer/site workspace fields.
+            customer_columns = {row["name"] for row in conn.execute("PRAGMA table_info(customers)").fetchall()}
+            if "customer_type" not in customer_columns:
+                conn.execute("ALTER TABLE customers ADD COLUMN customer_type TEXT NOT NULL DEFAULT 'individual'")
+            if "contact_person" not in customer_columns:
+                conn.execute("ALTER TABLE customers ADD COLUMN contact_person TEXT NOT NULL DEFAULT ''")
+            project_columns = {row["name"] for row in conn.execute("PRAGMA table_info(projects)").fetchall()}
+            if "site_id" not in project_columns:
+                conn.execute("ALTER TABLE projects ADD COLUMN site_id TEXT")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_sites_org ON sites(organization_id)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_sites_customer ON sites(customer_id)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_usage_org_metric_date ON usage_records(organization_id, metric, recorded_at)")
             conn.execute(
                 "INSERT INTO schema_meta(key, value) VALUES(?, ?) "

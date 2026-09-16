@@ -4,7 +4,7 @@ The platform database is deliberately separate from the Product Library
 SQLite database. Product records are referenced by ID, not duplicated here.
 """
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 SCHEMA_SQL = """
 PRAGMA foreign_keys = ON;
@@ -61,6 +61,21 @@ CREATE TABLE IF NOT EXISTS customers (
     phone TEXT NOT NULL DEFAULT '',
     address TEXT NOT NULL DEFAULT '',
     notes TEXT NOT NULL DEFAULT '',
+    customer_type TEXT NOT NULL DEFAULT 'individual',
+    contact_person TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS sites (
+    id TEXT PRIMARY KEY,
+    organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    customer_id TEXT REFERENCES customers(id) ON DELETE SET NULL,
+    name TEXT NOT NULL,
+    address TEXT NOT NULL DEFAULT '',
+    latitude REAL,
+    longitude REAL,
+    notes TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -69,6 +84,7 @@ CREATE TABLE IF NOT EXISTS projects (
     id TEXT PRIMARY KEY,
     organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     customer_id TEXT REFERENCES customers(id) ON DELETE SET NULL,
+    site_id TEXT REFERENCES sites(id) ON DELETE SET NULL,
     name TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'draft',
     location TEXT NOT NULL DEFAULT '',
@@ -161,6 +177,8 @@ CREATE INDEX IF NOT EXISTS idx_org_members_user ON organization_members(user_id)
 CREATE INDEX IF NOT EXISTS idx_auth_sessions_user ON auth_sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_auth_sessions_org ON auth_sessions(organization_id);
 CREATE INDEX IF NOT EXISTS idx_customers_org ON customers(organization_id);
+CREATE INDEX IF NOT EXISTS idx_sites_org ON sites(organization_id);
+CREATE INDEX IF NOT EXISTS idx_sites_customer ON sites(customer_id);
 CREATE INDEX IF NOT EXISTS idx_projects_org ON projects(organization_id);
 CREATE INDEX IF NOT EXISTS idx_projects_customer ON projects(customer_id);
 CREATE INDEX IF NOT EXISTS idx_designs_project ON designs(project_id);

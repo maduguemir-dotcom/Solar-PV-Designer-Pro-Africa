@@ -43,11 +43,24 @@ class Customer:
 
 
 @dataclass(frozen=True)
+class Site:
+    id: str
+    organization_id: str
+    name: str
+    customer_id: Optional[str] = None
+    address: str = ""
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    notes: str = ""
+
+
+@dataclass(frozen=True)
 class Project:
     id: str
     organization_id: str
     name: str
     customer_id: Optional[str] = None
+    site_id: Optional[str] = None
     status: str = "draft"
     location: str = ""
     notes: str = ""
