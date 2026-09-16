@@ -20,6 +20,7 @@ def render_dashboard_ui() -> None:
     org_id = _ensure_workspace(repo)
 
     customers = safe_records(repo, "customers", "organization_id=?", (org_id,))
+    sites = safe_records(repo, "sites", "organization_id=?", (org_id,))
     projects = safe_records(repo, "projects", "organization_id=?", (org_id,))
     designs = designs_for_projects(repo, projects)
     design_ids = tuple(d["id"] for d in designs)
@@ -32,11 +33,12 @@ def render_dashboard_ui() -> None:
     st.title("🏠 Professional Dashboard")
     st.caption("Your Solar PV Designer Pro Africa™ engineering and business workspace.")
 
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Customers", len(customers))
-    c2.metric("Projects", len(projects))
-    c3.metric("Saved Designs", len(designs))
-    c4.metric("Reports", len(reports))
+    c2.metric("Sites", len(sites))
+    c3.metric("Projects", len(projects))
+    c4.metric("Saved Designs", len(designs))
+    c5.metric("Reports", len(reports))
 
     st.divider()
 
