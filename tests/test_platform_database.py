@@ -13,7 +13,7 @@ def test_platform_database_initializes_expected_tables(tmp_path: Path):
         "design_results", "reports", "subscriptions", "usage_records",
     }
     assert expected.issubset(tables)
-    assert db.schema_version() == 5
+    assert db.schema_version() == 6
 
 
 def test_platform_database_foreign_keys_are_enabled(tmp_path: Path):
