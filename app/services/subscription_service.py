@@ -31,6 +31,7 @@ PLANS = {
         "free", "FREE", "For learning, small projects and evaluation.",
         {
             "customers": 10,
+            "sites": 10,
             "projects": 3,
             "design_runs": 10,
             "professional_designs_saved": 3,
@@ -44,6 +45,7 @@ PLANS = {
         "professional", "PROFESSIONAL", "For solar installers and energy professionals.",
         {
             "customers": 250,
+            "sites": 250,
             "projects": 100,
             "design_runs": 250,
             "professional_designs_saved": 100,
@@ -57,6 +59,7 @@ PLANS = {
         "business", "BUSINESS", "For solar companies and multi-staff engineering teams.",
         {
             "customers": None,
+            "sites": None,
             "projects": None,
             "design_runs": None,
             "professional_designs_saved": None,
@@ -70,6 +73,7 @@ PLANS = {
 
 METRIC_LABELS = {
     "customers": "Customers",
+    "sites": "Installation sites",
     "projects": "Projects",
     "design_runs": "Design runs",
     "professional_designs_saved": "Professional designs saved",
