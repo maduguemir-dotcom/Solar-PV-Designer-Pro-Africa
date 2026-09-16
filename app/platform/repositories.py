@@ -122,11 +122,20 @@ class PlatformRepository:
             )
         return subscription_id
 
-    def update_subscription_for_org(self, organization_id: str, plan_code: str, status: str = "active") -> None:
+    def update_subscription_for_org(self, organization_id: str, plan_code: str, status: str = "active",
+                                     provider_subscription_id: Optional[str] = None,
+                                     current_period_end: Optional[str] = None) -> None:
         with self.db.connect() as conn:
             conn.execute(
-                "UPDATE subscriptions SET plan_code=?, status=?, updated_at=CURRENT_TIMESTAMP WHERE organization_id=?",
-                (plan_code, status, organization_id),
+                "UPDATE subscriptions SET plan_code=?, status=?, provider_subscription_id=COALESCE(?, provider_subscription_id), current_period_end=COALESCE(?, current_period_end), updated_at=CURRENT_TIMESTAMP WHERE organization_id=?",
+                (plan_code, status, provider_subscription_id, current_period_end, organization_id),
+            )
+
+    def update_checkout_status(self, organization_id: str, provider_session_id: str, status: str) -> None:
+        with self.db.connect() as conn:
+            conn.execute(
+                "UPDATE billing_checkout_sessions SET status=?, updated_at=CURRENT_TIMESTAMP WHERE organization_id=? AND provider_session_id=?",
+                (status, organization_id, provider_session_id),
             )
 
     def create_billing_event(self, organization_id: str, event_type: str, provider_event_id: str, payload: Optional[dict] = None, event_id: Optional[str] = None) -> str:

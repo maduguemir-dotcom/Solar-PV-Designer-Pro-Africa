@@ -4,7 +4,7 @@ The platform database is deliberately separate from the Product Library
 SQLite database. Product records are referenced by ID, not duplicated here.
 """
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 SCHEMA_SQL = """
 PRAGMA foreign_keys = ON;
@@ -124,7 +124,9 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     plan_code TEXT NOT NULL DEFAULT 'free',
     status TEXT NOT NULL DEFAULT 'active',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    provider_subscription_id TEXT,
+    current_period_end TEXT
 );
 
 CREATE TABLE IF NOT EXISTS billing_events (

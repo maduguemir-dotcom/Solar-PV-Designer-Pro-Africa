@@ -36,6 +36,11 @@ class PlatformDatabase:
                 conn.execute("ALTER TABLE users ADD COLUMN last_login_at TEXT")
             # Stage 5B keeps the existing subscription/usage tables and adds
             # an index useful for monthly entitlement checks.
+            sub_columns = {row["name"] for row in conn.execute("PRAGMA table_info(subscriptions)").fetchall()}
+            if "provider_subscription_id" not in sub_columns:
+                conn.execute("ALTER TABLE subscriptions ADD COLUMN provider_subscription_id TEXT")
+            if "current_period_end" not in sub_columns:
+                conn.execute("ALTER TABLE subscriptions ADD COLUMN current_period_end TEXT")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_usage_org_metric_date ON usage_records(organization_id, metric, recorded_at)")
             conn.execute(
                 "INSERT INTO schema_meta(key, value) VALUES(?, ?) "
