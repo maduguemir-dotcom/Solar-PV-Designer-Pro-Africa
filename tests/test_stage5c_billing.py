@@ -17,7 +17,7 @@ def make_org(tmp_path):
 
 def test_stage5c_schema_and_placeholder_checkout(tmp_path):
     db, oid = make_org(tmp_path)
-    assert db.schema_version() == 4
+    assert db.schema_version() == 5
     assert "billing_events" in db.table_names()
     assert "billing_checkout_sessions" in db.table_names()
     billing = BillingService(db, PlaceholderPaymentProvider())
