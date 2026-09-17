@@ -194,13 +194,13 @@ class PlatformRepository:
         ``where`` is intentionally caller-supplied only by internal application
         code; values belong in ``params`` so user input is never interpolated.
         """
-        allowed = {"users", "organizations", "organization_members", "customers", "sites", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records", "billing_events", "billing_checkout_sessions"}
+        allowed = {"users", "organizations", "organization_members", "customers", "sites", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records", "billing_events", "billing_checkout_sessions", "quotations", "quotation_items"}
         if table not in allowed:
             raise ValueError(f"Unsupported table: {table}")
         sql = f"SELECT * FROM {table}"
         if where:
             sql += f" WHERE {where}"
-        sql += " ORDER BY recorded_at DESC" if table == "usage_records" else " ORDER BY created_at DESC"
+        sql += " ORDER BY recorded_at DESC" if table == "usage_records" else (" ORDER BY created_at DESC" if table != "quotation_items" else " ORDER BY id DESC")
         with self.db.connect() as conn:
             rows = conn.execute(sql, params).fetchall()
         return [dict(row) for row in rows]
@@ -251,7 +251,7 @@ class PlatformRepository:
             conn.execute(f"UPDATE reports SET {assignments} WHERE id=?", list(fields.values()) + [report_id])
 
     def get_one(self, table: str, record_id: str) -> Optional[dict[str, Any]]:
-        allowed = {"users", "organizations", "customers", "sites", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records", "billing_events", "billing_checkout_sessions"}
+        allowed = {"users", "organizations", "customers", "sites", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records", "billing_events", "billing_checkout_sessions", "quotations", "quotation_items"}
         if table not in allowed:
             raise ValueError(f"Unsupported table: {table}")
         id_column = "id"
@@ -281,6 +281,9 @@ class PlatformRepository:
         with self.db.connect() as conn:
             rows = conn.execute("SELECT * FROM organization_members WHERE user_id=? AND status='active' ORDER BY created_at", (user_id,)).fetchall()
         return [dict(row) for row in rows]
+
+    def list_quotations(self, organization_id: str) -> list[dict[str, Any]]:
+        return self.list_records("quotations", "organization_id=? ORDER BY created_at DESC", (organization_id,))
 
     def organizations_for_user(self, user_id: str) -> list[dict[str, Any]]:
         with self.db.connect() as conn:

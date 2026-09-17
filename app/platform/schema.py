@@ -4,7 +4,7 @@ The platform database is deliberately separate from the Product Library
 SQLite database. Product records are referenced by ID, not duplicated here.
 """
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 SCHEMA_SQL = """
 PRAGMA foreign_keys = ON;
@@ -164,6 +164,44 @@ CREATE TABLE IF NOT EXISTS billing_checkout_sessions (
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS quotations (
+    id TEXT PRIMARY KEY,
+    organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    customer_id TEXT REFERENCES customers(id) ON DELETE SET NULL,
+    quote_number TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'draft',
+    currency TEXT NOT NULL,
+    direct_cost REAL NOT NULL DEFAULT 0,
+    overhead REAL NOT NULL DEFAULT 0,
+    contingency REAL NOT NULL DEFAULT 0,
+    markup REAL NOT NULL DEFAULT 0,
+    subtotal REAL NOT NULL DEFAULT 0,
+    tax REAL NOT NULL DEFAULT 0,
+    grand_total REAL NOT NULL DEFAULT 0,
+    assumptions_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(organization_id, quote_number)
+);
+
+CREATE TABLE IF NOT EXISTS quotation_items (
+    id TEXT PRIMARY KEY,
+    quotation_id TEXT NOT NULL REFERENCES quotations(id) ON DELETE CASCADE,
+    category TEXT NOT NULL,
+    description TEXT NOT NULL,
+    quantity REAL NOT NULL CHECK(quantity > 0),
+    unit TEXT NOT NULL DEFAULT 'unit',
+    unit_price REAL NOT NULL DEFAULT 0,
+    currency TEXT NOT NULL,
+    fx_rate REAL NOT NULL DEFAULT 1,
+    total REAL NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_quotations_org ON quotations(organization_id);
+CREATE INDEX IF NOT EXISTS idx_quotations_project ON quotations(project_id);
+CREATE INDEX IF NOT EXISTS idx_quotation_items_quote ON quotation_items(quotation_id);
 
 CREATE TABLE IF NOT EXISTS usage_records (
     id TEXT PRIMARY KEY,
