@@ -38,6 +38,7 @@ PLANS = {
             "professional_reports_generated": 3,
             "design_versions_created": 5,
             "team_members": 1,
+            "quotations_created": 5,
         },
         frozenset({"basic_design", "basic_reports", "basic_equipment"}),
     ),
@@ -52,6 +53,7 @@ PLANS = {
             "professional_reports_generated": 100,
             "design_versions_created": 250,
             "team_members": 5,
+            "quotations_created": 100,
         },
         frozenset({"basic_design", "advanced_design", "professional_reports", "equipment_library", "design_history", "ai_assistance"}),
     ),
@@ -66,6 +68,7 @@ PLANS = {
             "professional_reports_generated": None,
             "design_versions_created": None,
             "team_members": 25,
+            "quotations_created": None,
         },
         frozenset({"basic_design", "advanced_design", "professional_reports", "equipment_library", "design_history", "ai_assistance", "team_management", "branded_reports", "business_analytics"}),
     ),
@@ -80,6 +83,7 @@ METRIC_LABELS = {
     "professional_reports_generated": "Professional reports",
     "design_versions_created": "Design versions",
     "team_members": "Team members",
+    "quotations_created": "Quotations created",
 }
 
 class UsageLimitError(ValueError):
