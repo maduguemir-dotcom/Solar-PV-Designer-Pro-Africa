@@ -63,6 +63,7 @@ from ui.report_management import render_professional_report_ui
 from ui.dashboard import render_dashboard_ui
 from auth.ui import render_auth_gate, render_authenticated_sidebar
 from ui.billing import render_billing_ui
+from ui.quotations import render_quotation_ui
 from ui.subscription import render_subscription_ui
 
 
@@ -422,6 +423,8 @@ app_page = st.sidebar.radio(
 
         "💳 Billing & Subscription",
 
+        "💼 Costing & Quotations",
+
     ],
 
     key="main_application_navigation",
@@ -557,6 +560,20 @@ if app_page == "🛠️ Product Management":
 # ==========================================================
 # SECTION 9 - COST DIARY PAGE
 # ==========================================================
+
+if app_page == "💼 Costing & Quotations":
+
+    try:
+
+        render_quotation_ui()
+
+    except Exception as error:
+
+        st.error("The Costing & Quotations module encountered an error.")
+        st.exception(error)
+
+    st.stop()
+
 
 if app_page == "💳 Billing & Subscription":
 
