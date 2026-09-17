@@ -15,7 +15,7 @@ def _repo(tmp_path: Path):
 
 def test_stage6a_schema_and_site_workspace(tmp_path: Path):
     db, repo, org = _repo(tmp_path)
-    assert db.schema_version() == 6
+    assert db.schema_version() == 7
     tables = set(db.table_names())
     assert "sites" in tables
     customer = repo.create_customer(org, "Acme Energy", customer_type="company", contact_person="Amina")
