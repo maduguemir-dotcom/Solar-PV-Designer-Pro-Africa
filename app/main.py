@@ -65,6 +65,7 @@ from auth.ui import render_auth_gate, render_authenticated_sidebar
 from ui.billing import render_billing_ui
 from ui.quotations import render_quotation_ui
 from ui.subscription import render_subscription_ui
+from ui.company_profile import render_company_profile_ui
 
 
 # ==========================================================
@@ -425,6 +426,8 @@ app_page = st.sidebar.radio(
 
         "💼 Costing & Quotations",
 
+        "🏢 Company Profile & Branding",
+
     ],
 
     key="main_application_navigation",
@@ -586,6 +589,15 @@ if app_page == "💳 Billing & Subscription":
         st.error("The Billing & Subscription module encountered an error.")
         st.exception(error)
 
+    st.stop()
+
+
+if app_page == "🏢 Company Profile & Branding":
+    try:
+        render_company_profile_ui()
+    except Exception as error:
+        st.error("The Company Profile module encountered an error.")
+        st.exception(error)
     st.stop()
 
 
