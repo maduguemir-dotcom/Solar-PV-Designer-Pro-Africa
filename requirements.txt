@@ -6,4 +6,6 @@ requests
 folium
 streamlit-folium
 plotly
-pytest
+reportlab
+plotly
+pandas
