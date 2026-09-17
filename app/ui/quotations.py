@@ -9,6 +9,8 @@ from app.platform.repositories import PlatformRepository
 from app.services.quotation_service import CostLine, calculate_quote
 from app.services.quotation_persistence_service import QuotationPersistenceService
 from app.services.subscription_service import SubscriptionService, UsageLimitError
+from app.services.proposal_service import build_proposal_pdf
+from pathlib import Path
 
 
 def render_quotation_ui():
@@ -100,6 +102,17 @@ def render_quotation_ui():
                 st.success(f"Quotation saved: {qid[-12:]}")
             except UsageLimitError as exc:
                 st.warning(str(exc))
+
+    st.markdown("### Professional proposal")
+    company_name = st.text_input("Company name", value="Solar PV Designer Pro Africa")
+    terms = st.text_area("Terms and conditions", value="This quotation is subject to final site verification, equipment availability, and mutually agreed payment terms.")
+    prepared_by = st.text_input("Prepared by", value=st.session_state.get("authenticated_user", {}).get("full_name", ""))
+    if st.button("📄 Generate professional PDF proposal", use_container_width=True):
+        output = Path("reports") / f"proposal_{project['id'][-10:]}.pdf"
+        customer = next((c for c in customers if c["id"] == project.get("customer_id")), {})
+        proposal_path = build_proposal_pdf(output, company={"name": company_name, "terms": terms}, customer=customer, project=project, quote=quote, quote_number="QT-" + project["id"][-8:].upper(), prepared_by=prepared_by)
+        with open(proposal_path, "rb") as handle:
+            st.download_button("⬇️ Download professional proposal", handle.read(), file_name=output.name, mime="application/pdf", use_container_width=True)
 
     saved = repo.list_records("quotations", "organization_id=? ORDER BY created_at DESC", (org_id,))
     if saved:
