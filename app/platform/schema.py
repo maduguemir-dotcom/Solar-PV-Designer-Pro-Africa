@@ -4,7 +4,7 @@ The platform database is deliberately separate from the Product Library
 SQLite database. Product records are referenced by ID, not duplicated here.
 """
 
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 
 SCHEMA_SQL = """
 PRAGMA foreign_keys = ON;
@@ -165,6 +165,23 @@ CREATE TABLE IF NOT EXISTS billing_checkout_sessions (
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS organization_profiles (
+    organization_id TEXT PRIMARY KEY REFERENCES organizations(id) ON DELETE CASCADE,
+    legal_name TEXT NOT NULL DEFAULT '',
+    display_name TEXT NOT NULL DEFAULT '',
+    logo_path TEXT NOT NULL DEFAULT '',
+    address TEXT NOT NULL DEFAULT '',
+    phone TEXT NOT NULL DEFAULT '',
+    email TEXT NOT NULL DEFAULT '',
+    website TEXT NOT NULL DEFAULT '',
+    tax_id TEXT NOT NULL DEFAULT '',
+    payment_terms TEXT NOT NULL DEFAULT '',
+    quotation_validity_days INTEGER NOT NULL DEFAULT 30,
+    bank_details TEXT NOT NULL DEFAULT '',
+    terms_conditions TEXT NOT NULL DEFAULT '',
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS quotations (
     id TEXT PRIMARY KEY,
     organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -228,3 +245,5 @@ CREATE INDEX IF NOT EXISTS idx_billing_checkout_org ON billing_checkout_sessions
 CREATE INDEX IF NOT EXISTS idx_usage_org_metric ON usage_records(organization_id, metric);
 CREATE INDEX IF NOT EXISTS idx_usage_org_metric_date ON usage_records(organization_id, metric, recorded_at);
 """
+
+# Stage 6D company profile fields are included through additive migration.

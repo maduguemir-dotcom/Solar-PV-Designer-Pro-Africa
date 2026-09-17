@@ -292,3 +292,21 @@ class PlatformRepository:
                 (user_id,),
             ).fetchall()
         return [dict(row) for row in rows]
+
+    def get_organization_profile(self, organization_id: str) -> Optional[dict[str, Any]]:
+        with self.db.connect() as conn:
+            row = conn.execute("SELECT * FROM organization_profiles WHERE organization_id=?", (organization_id,)).fetchone()
+            return dict(row) if row else None
+
+    def save_organization_profile(self, organization_id: str, fields: dict[str, Any]) -> None:
+        allowed = {"legal_name","display_name","logo_path","address","phone","email","website","tax_id","payment_terms","quotation_validity_days","bank_details","terms_conditions"}
+        clean = {k: v for k, v in fields.items() if k in allowed}
+        existing = self.get_organization_profile(organization_id)
+        values = {k: (existing.get(k, "") if existing else "") for k in allowed}
+        values.update(clean)
+        with self.db.connect() as conn:
+            conn.execute("""INSERT INTO organization_profiles
+                (organization_id,legal_name,display_name,logo_path,address,phone,email,website,tax_id,payment_terms,quotation_validity_days,bank_details,terms_conditions)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                ON CONFLICT(organization_id) DO UPDATE SET legal_name=excluded.legal_name,display_name=excluded.display_name,logo_path=excluded.logo_path,address=excluded.address,phone=excluded.phone,email=excluded.email,website=excluded.website,tax_id=excluded.tax_id,payment_terms=excluded.payment_terms,quotation_validity_days=excluded.quotation_validity_days,bank_details=excluded.bank_details,terms_conditions=excluded.terms_conditions,updated_at=CURRENT_TIMESTAMP""",
+                (organization_id, values["legal_name"], values["display_name"], values["logo_path"], values["address"], values["phone"], values["email"], values["website"], values["tax_id"], values["payment_terms"], int(values["quotation_validity_days"] or 30), values["bank_details"], values["terms_conditions"]))
