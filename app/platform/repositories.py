@@ -194,7 +194,7 @@ class PlatformRepository:
         ``where`` is intentionally caller-supplied only by internal application
         code; values belong in ``params`` so user input is never interpolated.
         """
-        allowed = {"users", "organizations", "organization_members", "customers", "sites", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records", "billing_events", "billing_checkout_sessions", "quotations", "quotation_items"}
+        allowed = {"users", "organizations", "organization_members", "customers", "sites", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records", "billing_events", "billing_checkout_sessions", "quotations", "quotation_items", "proposal_documents", "proposal_access_events"}
         if table not in allowed:
             raise ValueError(f"Unsupported table: {table}")
         sql = f"SELECT * FROM {table}"
@@ -251,7 +251,7 @@ class PlatformRepository:
             conn.execute(f"UPDATE reports SET {assignments} WHERE id=?", list(fields.values()) + [report_id])
 
     def get_one(self, table: str, record_id: str) -> Optional[dict[str, Any]]:
-        allowed = {"users", "organizations", "customers", "sites", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records", "billing_events", "billing_checkout_sessions", "quotations", "quotation_items"}
+        allowed = {"users", "organizations", "customers", "sites", "projects", "designs", "design_equipment", "design_results", "reports", "subscriptions", "usage_records", "billing_events", "billing_checkout_sessions", "quotations", "quotation_items", "proposal_documents", "proposal_access_events"}
         if table not in allowed:
             raise ValueError(f"Unsupported table: {table}")
         id_column = "id"
@@ -310,3 +310,11 @@ class PlatformRepository:
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
                 ON CONFLICT(organization_id) DO UPDATE SET legal_name=excluded.legal_name,display_name=excluded.display_name,logo_path=excluded.logo_path,address=excluded.address,phone=excluded.phone,email=excluded.email,website=excluded.website,tax_id=excluded.tax_id,payment_terms=excluded.payment_terms,quotation_validity_days=excluded.quotation_validity_days,bank_details=excluded.bank_details,terms_conditions=excluded.terms_conditions,updated_at=CURRENT_TIMESTAMP""",
                 (organization_id, values["legal_name"], values["display_name"], values["logo_path"], values["address"], values["phone"], values["email"], values["website"], values["tax_id"], values["payment_terms"], int(values["quotation_validity_days"] or 30), values["bank_details"], values["terms_conditions"]))
+
+
+    def list_proposal_documents(self, organization_id: str) -> list[dict[str, Any]]:
+        return self.list_records("proposal_documents", "organization_id=? ORDER BY created_at DESC", (organization_id,))
+
+    def revoke_proposal_document(self, document_id: str) -> None:
+        with self.db.connect() as conn:
+            conn.execute("UPDATE proposal_documents SET status='revoked', revoked_at=CURRENT_TIMESTAMP WHERE id=?", (document_id,))

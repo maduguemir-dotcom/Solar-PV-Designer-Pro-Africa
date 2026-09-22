@@ -4,7 +4,7 @@ The platform database is deliberately separate from the Product Library
 SQLite database. Product records are referenced by ID, not duplicated here.
 """
 
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 9
 
 SCHEMA_SQL = """
 PRAGMA foreign_keys = ON;
@@ -219,6 +219,31 @@ CREATE TABLE IF NOT EXISTS quotation_items (
 CREATE INDEX IF NOT EXISTS idx_quotations_org ON quotations(organization_id);
 CREATE INDEX IF NOT EXISTS idx_quotations_project ON quotations(project_id);
 CREATE INDEX IF NOT EXISTS idx_quotation_items_quote ON quotation_items(quotation_id);
+
+CREATE TABLE IF NOT EXISTS proposal_documents (
+    id TEXT PRIMARY KEY,
+    organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    quotation_id TEXT NOT NULL REFERENCES quotations(id) ON DELETE CASCADE,
+    document_type TEXT NOT NULL DEFAULT 'proposal',
+    storage_path TEXT NOT NULL,
+    access_token_hash TEXT,
+    expires_at TEXT,
+    status TEXT NOT NULL DEFAULT 'active',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    revoked_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS proposal_access_events (
+    id TEXT PRIMARY KEY,
+    document_id TEXT NOT NULL REFERENCES proposal_documents(id) ON DELETE CASCADE,
+    event_type TEXT NOT NULL,
+    accessed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    metadata_json TEXT NOT NULL DEFAULT '{}'
+);
+
+CREATE INDEX IF NOT EXISTS idx_proposal_documents_org ON proposal_documents(organization_id);
+CREATE INDEX IF NOT EXISTS idx_proposal_documents_quote ON proposal_documents(quotation_id);
+CREATE INDEX IF NOT EXISTS idx_proposal_access_document ON proposal_access_events(document_id);
 
 CREATE TABLE IF NOT EXISTS usage_records (
     id TEXT PRIMARY KEY,
