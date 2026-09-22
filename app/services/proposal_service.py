@@ -6,7 +6,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Image
+from app.services.branding_service import company_display_name, company_contact_lines, resolve_logo
 
 
 def build_proposal_pdf(path: str | Path, *, company: dict, customer: dict, project: dict,
@@ -15,8 +16,13 @@ def build_proposal_pdf(path: str | Path, *, company: dict, customer: dict, proje
     output.parent.mkdir(parents=True, exist_ok=True)
     styles = getSampleStyleSheet()
     story = []
-    title = company.get("name") or "Solar PV Designer Pro Africa"
-    story += [Paragraph(title, styles["Title"]), Paragraph("Professional Solar Project Quotation", styles["Heading2"]), Spacer(1, 8)]
+    logo = resolve_logo(company)
+    if logo:
+        try: story.append(Image(logo, width=35*mm, height=20*mm, kind="proportional"))
+        except Exception: pass
+    story.append(Paragraph(company_display_name(company), styles["Title"]))
+    for line in company_contact_lines(company): story.append(Paragraph(line, styles["BodyText"]))
+    story += [Paragraph("Professional Solar Project Quotation", styles["Heading2"]), Spacer(1, 8)]
     info = [
         ["Quotation number", quote_number, "Date", str(date.today())],
         ["Customer", customer.get("name", "—"), "Project", project.get("name", "—")],

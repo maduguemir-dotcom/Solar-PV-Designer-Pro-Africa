@@ -15,6 +15,9 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from app.platform.database import PlatformDatabase
 from app.platform.repositories import PlatformRepository
 from app.services.subscription_service import SubscriptionService
+from app.services.company_profile_service import CompanyProfileService
+from app.services.branding_service import company_display_name, company_contact_lines, resolve_logo
+from reportlab.platypus import Image
 
 
 class ProfessionalReportService:
@@ -38,7 +41,7 @@ class ProfessionalReportService:
             return default
         return str(value)
 
-    def _build_pdf(self, *, project: Mapping[str, Any], design: Mapping[str, Any], result: Mapping[str, Any], equipment: list[Mapping[str, Any]]) -> bytes:
+    def _build_pdf(self, *, project: Mapping[str, Any], design: Mapping[str, Any], result: Mapping[str, Any], equipment: list[Mapping[str, Any]], company: Mapping[str, Any] | None = None) -> bytes:
         buffer = BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=16*mm, leftMargin=16*mm, topMargin=16*mm, bottomMargin=16*mm)
         styles = getSampleStyleSheet()
@@ -47,8 +50,14 @@ class ProfessionalReportService:
         body = styles["BodyText"]
         story: list[Any] = []
 
-        story += [Paragraph("Solar PV Designer Pro Africa™", title),
-                  Paragraph("Professional Engineering Design Report", styles["Heading1"]), Spacer(1, 5*mm)]
+        company = dict(company or {})
+        logo = resolve_logo(company)
+        if logo:
+            try: story.append(Image(logo, width=35*mm, height=20*mm, kind="proportional"))
+            except Exception: pass
+        story += [Paragraph(company_display_name(company), title), Paragraph("Professional Engineering Design Report", styles["Heading1"])]
+        for line in company_contact_lines(company): story.append(Paragraph(self._text(line), body))
+        story.append(Spacer(1, 5*mm))
         story.append(Paragraph(f"Project: {self._text(project.get('name'))}", body))
         story.append(Paragraph(f"Design: {self._text(design.get('name'))} — Version {design.get('version', '—')}", body))
         story.append(Paragraph(f"Engineering Engine: {self._text(design.get('engine_version'))}", body))
@@ -163,7 +172,8 @@ class ProfessionalReportService:
             raise ValueError("No saved engineering result exists for this design.")
         result = json.loads(rows[0]["result_json"])
         equipment = self.repository.list_records("design_equipment", "design_id=?", (design_id,))
-        pdf_bytes = self._build_pdf(project=project, design=design, result=result, equipment=equipment)
+        company = CompanyProfileService(self.repository).get(organization_id)
+        pdf_bytes = self._build_pdf(project=project, design=design, result=result, equipment=equipment, company=company)
 
         report_id = None
         file_path = ""
