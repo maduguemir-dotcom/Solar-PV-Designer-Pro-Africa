@@ -4,7 +4,7 @@ The platform database is deliberately separate from the Product Library
 SQLite database. Product records are referenced by ID, not duplicated here.
 """
 
-SCHEMA_VERSION = 9
+SCHEMA_VERSION = 10
 
 SCHEMA_SQL = """
 PRAGMA foreign_keys = ON;
@@ -269,6 +269,21 @@ CREATE INDEX IF NOT EXISTS idx_billing_events_org ON billing_events(organization
 CREATE INDEX IF NOT EXISTS idx_billing_checkout_org ON billing_checkout_sessions(organization_id);
 CREATE INDEX IF NOT EXISTS idx_usage_org_metric ON usage_records(organization_id, metric);
 CREATE INDEX IF NOT EXISTS idx_usage_org_metric_date ON usage_records(organization_id, metric, recorded_at);
+
+CREATE TABLE IF NOT EXISTS email_delivery_logs (
+    id TEXT PRIMARY KEY,
+    organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    recipient TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    event_type TEXT NOT NULL DEFAULT 'notification',
+    provider TEXT NOT NULL,
+    status TEXT NOT NULL,
+    provider_message_id TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_email_logs_org ON email_delivery_logs(organization_id);
+CREATE INDEX IF NOT EXISTS idx_email_logs_created ON email_delivery_logs(created_at);
 """
 
 # Stage 6D company profile fields are included through additive migration.
