@@ -63,6 +63,7 @@ from ui.report_management import render_professional_report_ui
 from ui.dashboard import render_dashboard_ui
 from auth.ui import render_auth_gate, render_authenticated_sidebar
 from ui.billing import render_billing_ui
+from ui.email_delivery import render_email_delivery_ui
 from ui.quotations import render_quotation_ui
 from ui.subscription import render_subscription_ui
 from ui.company_profile import render_company_profile_ui
@@ -429,6 +430,7 @@ app_page = st.sidebar.radio(
 
         "🏢 Company Profile & Branding",
         "🔗 Proposal Portal & Delivery",
+        "✉️ Email Delivery",
 
     ],
 
@@ -593,6 +595,9 @@ if app_page == "💳 Billing & Subscription":
 
     st.stop()
 
+
+if app_page == "✉️ Email Delivery":
+    render_email_delivery_ui()
 
 if app_page == "🔗 Proposal Portal & Delivery":
     try:
