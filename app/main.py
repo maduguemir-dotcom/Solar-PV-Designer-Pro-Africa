@@ -66,6 +66,7 @@ from ui.billing import render_billing_ui
 from ui.quotations import render_quotation_ui
 from ui.subscription import render_subscription_ui
 from ui.company_profile import render_company_profile_ui
+from ui.proposal_portal import render_proposal_portal_ui
 
 
 # ==========================================================
@@ -427,6 +428,7 @@ app_page = st.sidebar.radio(
         "💼 Costing & Quotations",
 
         "🏢 Company Profile & Branding",
+        "🔗 Proposal Portal & Delivery",
 
     ],
 
@@ -589,6 +591,15 @@ if app_page == "💳 Billing & Subscription":
         st.error("The Billing & Subscription module encountered an error.")
         st.exception(error)
 
+    st.stop()
+
+
+if app_page == "🔗 Proposal Portal & Delivery":
+    try:
+        render_proposal_portal_ui()
+    except Exception as error:
+        st.error("The Proposal Portal module encountered an error.")
+        st.exception(error)
     st.stop()
 
 
