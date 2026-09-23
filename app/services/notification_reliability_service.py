@@ -1,35 +1,60 @@
-"""Retry and recovery controls for queued notifications."""
+"""Reliable claiming, retry and monitoring controls for queued notifications."""
 from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 class NotificationReliabilityService:
     def __init__(self, database, max_attempts=3, retry_delay_minutes=5):
         self.db = database
-        self.max_attempts = max_attempts
-        self.retry_delay_minutes = retry_delay_minutes
+        self.max_attempts = max(1, int(max_attempts))
+        self.retry_delay_minutes = max(0, int(retry_delay_minutes))
 
     def claim_due(self, limit=20):
         now = datetime.now(timezone.utc).isoformat()
         with self.db.connect() as conn:
-            rows = conn.execute("SELECT * FROM notification_queue WHERE status IN ('queued','failed') AND attempts < ? AND (next_attempt_at IS NULL OR next_attempt_at <= ?) ORDER BY created_at LIMIT ?", (self.max_attempts, now, limit)).fetchall()
-            ids = [r['id'] for r in rows]
-            for item_id in ids:
-                conn.execute("UPDATE notification_queue SET status='processing' WHERE id=?", (item_id,))
+            rows = conn.execute(
+                "SELECT * FROM notification_queue WHERE status IN ('queued','failed') "
+                "AND attempts < ? AND (next_attempt_at IS NULL OR next_attempt_at <= ?) "
+                "ORDER BY created_at LIMIT ?", (self.max_attempts, now, limit)
+            ).fetchall()
+            for row in rows:
+                conn.execute(
+                    "UPDATE notification_queue SET status='processing', attempts=attempts+1 WHERE id=?",
+                    (row['id'],),
+                )
         return rows
+
+    def record_success(self, notification_id):
+        with self.db.connect() as conn:
+            conn.execute("UPDATE notification_queue SET status='sent', last_error=NULL, next_attempt_at=NULL WHERE id=?", (notification_id,))
+        return {"id": notification_id, "status": "sent"}
 
     def record_failure(self, notification_id, error):
         now = datetime.now(timezone.utc)
         with self.db.connect() as conn:
             row = conn.execute("SELECT attempts FROM notification_queue WHERE id=?", (notification_id,)).fetchone()
             if not row:
-                raise ValueError('Notification not found')
-            attempts = int(row['attempts'])
+                raise ValueError("Notification not found")
+            attempts = int(row["attempts"])
             terminal = attempts >= self.max_attempts
             next_at = None if terminal else (now + timedelta(minutes=self.retry_delay_minutes)).isoformat()
-            status = 'dead_letter' if terminal else 'failed'
+            status = "dead_letter" if terminal else "failed"
             conn.execute("UPDATE notification_queue SET status=?, last_error=?, next_attempt_at=? WHERE id=?", (status, str(error), next_at, notification_id))
-            return {'id': notification_id, 'status': status, 'attempts': attempts, 'next_attempt_at': next_at}
+            return {"id": notification_id, "status": status, "attempts": attempts, "next_attempt_at": next_at}
 
     def recoverable(self, limit=100):
         with self.db.connect() as conn:
             return conn.execute("SELECT * FROM notification_queue WHERE status='failed' AND attempts < ? ORDER BY created_at LIMIT ?", (self.max_attempts, limit)).fetchall()
+
+    def metrics(self, organization_id=None):
+        clauses, params = [], []
+        if organization_id:
+            clauses.append("organization_id=?")
+            params.append(organization_id)
+        where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+        with self.db.connect() as conn:
+            rows = conn.execute(f"SELECT status, COUNT(*) AS count FROM notification_queue{where} GROUP BY status", params).fetchall()
+        result = {"queued": 0, "processing": 0, "sent": 0, "failed": 0, "dead_letter": 0}
+        for row in rows:
+            result[row["status"]] = int(row["count"])
+        result["total"] = sum(result.values())
+        return result
