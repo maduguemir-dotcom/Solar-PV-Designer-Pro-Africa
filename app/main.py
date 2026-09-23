@@ -65,6 +65,7 @@ from auth.ui import render_auth_gate, render_authenticated_sidebar
 from ui.billing import render_billing_ui
 from ui.email_delivery import render_email_delivery_ui
 from ui.email_settings import render_email_settings_ui
+from ui.notification_preferences import render_notification_preferences_ui
 from ui.quotations import render_quotation_ui
 from ui.subscription import render_subscription_ui
 from ui.company_profile import render_company_profile_ui
@@ -433,6 +434,7 @@ app_page = st.sidebar.radio(
         "🔗 Proposal Portal & Delivery",
         "✉️ Email Delivery",
         "⚙️ Email Provider Settings",
+        "🔔 Notification Preferences",
 
     ],
 
@@ -600,6 +602,12 @@ if app_page == "💳 Billing & Subscription":
 
 if app_page == "✉️ Email Delivery":
     render_email_delivery_ui()
+if app_page == "🔔 Notification Preferences":
+    from platform.database import PlatformDatabase
+    from platform.repositories import PlatformRepository
+    db = PlatformDatabase()
+    render_notification_preferences_ui(db, st.session_state.get("current_organization_id"))
+
 if app_page == "⚙️ Email Provider Settings":
     render_email_settings_ui()
 
