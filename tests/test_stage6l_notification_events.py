@@ -1,4 +1,4 @@
-from services.notification_event_service import NotificationEventService
+from app.services.notification_event_service import NotificationEventService
 
 class C:
     def __init__(self): self.rows = {}
