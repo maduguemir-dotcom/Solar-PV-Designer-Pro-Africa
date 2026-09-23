@@ -4,7 +4,7 @@ The platform database is deliberately separate from the Product Library
 SQLite database. Product records are referenced by ID, not duplicated here.
 """
 
-SCHEMA_VERSION = 12
+SCHEMA_VERSION = 13
 
 SCHEMA_SQL = """
 PRAGMA foreign_keys = ON;
@@ -289,7 +289,7 @@ CREATE TABLE IF NOT EXISTS notification_queue (
     id TEXT PRIMARY KEY, organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     recipient TEXT NOT NULL, subject TEXT NOT NULL, text_body TEXT NOT NULL, html_body TEXT NOT NULL DEFAULT '',
     event_type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', attempts INTEGER NOT NULL DEFAULT 0,
-    last_error TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    last_error TEXT, next_attempt_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_notification_queue_org ON notification_queue(organization_id);
 
