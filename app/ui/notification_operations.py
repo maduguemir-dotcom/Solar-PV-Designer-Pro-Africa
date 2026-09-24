@@ -1,4 +1,4 @@
-def render_notification_operations(service, organization_id, *, actor=None, secure_service=None):
+def render_notification_operations(service, organization_id, *, actor=None, secure_service=None, audit_history_service=None):
     """Render notification operations with authorization-aware recovery controls.
 
     ``service`` remains the metrics provider. Recovery buttons use ``secure_service``
@@ -51,3 +51,10 @@ def render_notification_operations(service, organization_id, *, actor=None, secu
             actor_user_id=actor["user_id"],
         )
         st.warning(f"Requeued {count} notification(s).")
+
+
+# Stage 6T integration helper: callers can render the read-only audit history
+# beneath the recovery controls without exposing another authorization path.
+def render_notification_audit_section(audit_history_service, organization_id):
+    from .notification_audit_history import render_notification_audit_history
+    return render_notification_audit_history(audit_history_service, organization_id)
