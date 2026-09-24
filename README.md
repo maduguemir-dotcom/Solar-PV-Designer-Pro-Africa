@@ -1,19 +1,14 @@
-# Solar PV Designer Pro Africa™ — Stage 6U
+# Solar PV Designer Pro Africa™ — Stage 6V
 
-**Notification Operations Analytics & Reliability Metrics**
+## Notification Operations Health Dashboard
 
-Apply after **Stage 6T** on `development-v3.0`.
+Stage-only package for the administrator-facing notification health dashboard.
 
-Upload these files while preserving their paths:
+Upload these files into the existing `development-v3.0` project, preserving the
+Stage 6S/6T/6U components already uploaded.
 
-- `app/services/notification_reliability_service.py`
-- `app/ui/notification_reliability.py`
-- `tests/test_stage6u_reliability.py`
-- `documentation/STAGE_6U_NOTIFICATION_RELIABILITY.md`
-- `README.md`
+### Commit
 
-Commit message:
-
-`Stage 6U - Add notification reliability analytics`
+`Stage 6V - Add notification operations health dashboard`
 
 Do not merge into `main` yet.
