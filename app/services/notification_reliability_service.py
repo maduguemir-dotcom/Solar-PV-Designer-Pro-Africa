@@ -1,60 +1,61 @@
-"""Reliable claiming, retry and monitoring controls for queued notifications."""
-from __future__ import annotations
-from datetime import datetime, timedelta, timezone
+"""Audit-derived notification reliability metrics (Stage 6U)."""
+from collections import Counter, defaultdict
+from datetime import datetime
+
 
 class NotificationReliabilityService:
-    def __init__(self, database, max_attempts=3, retry_delay_minutes=5):
-        self.db = database
-        self.max_attempts = max(1, int(max_attempts))
-        self.retry_delay_minutes = max(0, int(retry_delay_minutes))
+    """Build organization-scoped reliability metrics from durable audit events.
 
-    def claim_due(self, limit=20):
-        now = datetime.now(timezone.utc).isoformat()
-        with self.db.connect() as conn:
-            rows = conn.execute(
-                "SELECT * FROM notification_queue WHERE status IN ('queued','failed') "
-                "AND attempts < ? AND (next_attempt_at IS NULL OR next_attempt_at <= ?) "
-                "ORDER BY created_at LIMIT ?", (self.max_attempts, now, limit)
-            ).fetchall()
-            for row in rows:
-                conn.execute(
-                    "UPDATE notification_queue SET status='processing', attempts=attempts+1 WHERE id=?",
-                    (row['id'],),
-                )
-        return rows
+    These are audit-derived operational indicators, not direct queue telemetry.
+    """
 
-    def record_success(self, notification_id):
-        with self.db.connect() as conn:
-            conn.execute("UPDATE notification_queue SET status='sent', last_error=NULL, next_attempt_at=NULL WHERE id=?", (notification_id,))
-        return {"id": notification_id, "status": "sent"}
+    def __init__(self, audit_service):
+        self.audit_service = audit_service
 
-    def record_failure(self, notification_id, error):
-        now = datetime.now(timezone.utc)
-        with self.db.connect() as conn:
-            row = conn.execute("SELECT attempts FROM notification_queue WHERE id=?", (notification_id,)).fetchone()
-            if not row:
-                raise ValueError("Notification not found")
-            attempts = int(row["attempts"])
-            terminal = attempts >= self.max_attempts
-            next_at = None if terminal else (now + timedelta(minutes=self.retry_delay_minutes)).isoformat()
-            status = "dead_letter" if terminal else "failed"
-            conn.execute("UPDATE notification_queue SET status=?, last_error=?, next_attempt_at=? WHERE id=?", (status, str(error), next_at, notification_id))
-            return {"id": notification_id, "status": status, "attempts": attempts, "next_attempt_at": next_at}
+    def _events(self, organization_id, limit=500):
+        if not organization_id:
+            raise ValueError("organization_id is required")
+        if limit < 1 or limit > 5000:
+            raise ValueError("limit must be between 1 and 5000")
+        return self.audit_service.list_events(organization_id, limit=limit)
 
-    def recoverable(self, limit=100):
-        with self.db.connect() as conn:
-            return conn.execute("SELECT * FROM notification_queue WHERE status='failed' AND attempts < ? ORDER BY created_at LIMIT ?", (self.max_attempts, limit)).fetchall()
+    def summarize(self, organization_id, *, limit=500):
+        events = self._events(organization_id, limit)
+        outcomes = Counter(e.get("outcome", "unknown") for e in events)
+        actions = Counter(e.get("action", "unknown") for e in events)
+        total = len(events)
+        allowed = outcomes.get("allowed", 0)
+        denied = outcomes.get("denied", 0)
+        return {
+            "total_events": total,
+            "allowed_events": allowed,
+            "denied_events": denied,
+            "authorization_success_rate": (allowed / total * 100) if total else 0.0,
+            "denial_rate": (denied / total * 100) if total else 0.0,
+            "retry_failed_events": actions.get("retry_failed", 0),
+            "requeue_dead_letter_events": actions.get("requeue_dead_letter", 0),
+        }
 
-    def metrics(self, organization_id=None):
-        clauses, params = [], []
-        if organization_id:
-            clauses.append("organization_id=?")
-            params.append(organization_id)
-        where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
-        with self.db.connect() as conn:
-            rows = conn.execute(f"SELECT status, COUNT(*) AS count FROM notification_queue{where} GROUP BY status", params).fetchall()
-        result = {"queued": 0, "processing": 0, "sent": 0, "failed": 0, "dead_letter": 0}
-        for row in rows:
-            result[row["status"]] = int(row["count"])
-        result["total"] = sum(result.values())
-        return result
+    def daily_trend(self, organization_id, *, limit=500):
+        events = self._events(organization_id, limit)
+        trend = defaultdict(lambda: {"total": 0, "allowed": 0, "denied": 0})
+        for event in events:
+            stamp = event.get("created_at")
+            day = self._day(stamp)
+            trend[day]["total"] += 1
+            outcome = event.get("outcome")
+            if outcome in ("allowed", "denied"):
+                trend[day][outcome] += 1
+        return [
+            {"date": day, **values}
+            for day, values in sorted(trend.items())
+        ]
+
+    @staticmethod
+    def _day(value):
+        if not value:
+            return "unknown"
+        if isinstance(value, datetime):
+            return value.date().isoformat()
+        text = str(value)
+        return text[:10] if len(text) >= 10 else text
