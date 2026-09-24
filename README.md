@@ -1,20 +1,19 @@
-# Solar PV Designer Pro Africa™ — Stage 6T
+# Solar PV Designer Pro Africa™ — Stage 6U
 
-**Notification Audit & Operations History UI**
+**Notification Operations Analytics & Reliability Metrics**
 
-Apply after **Stage 6S** on `development-v3.0`.
+Apply after **Stage 6T** on `development-v3.0`.
 
 Upload these files while preserving their paths:
 
-- `app/services/notification_audit_history_service.py`
-- `app/ui/notification_audit_history.py`
-- `app/ui/notification_operations.py`
-- `tests/test_stage6t_audit_history.py`
-- `documentation/STAGE_6T_AUDIT_HISTORY_UI.md`
+- `app/services/notification_reliability_service.py`
+- `app/ui/notification_reliability.py`
+- `tests/test_stage6u_reliability.py`
+- `documentation/STAGE_6U_NOTIFICATION_RELIABILITY.md`
 - `README.md`
 
 Commit message:
 
-`Stage 6T - Add notification audit and operations history UI`
+`Stage 6U - Add notification reliability analytics`
 
 Do not merge into `main` yet.
