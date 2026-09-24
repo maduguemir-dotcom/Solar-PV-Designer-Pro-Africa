@@ -1,14 +1,19 @@
-# Stage 6P — Stage-Only Package
+# Solar PV Designer Pro Africa™ — Stage 6S
 
-Upload only these files to `development-v3.0`:
+**Notification Operations UI Integration & End-to-End Security Testing**
 
-- `app/services/notification_operations_service.py`
+Apply after **Stage 6R** on `development-v3.0`.
+
+Upload these files while preserving their paths:
+
 - `app/ui/notification_operations.py`
-- `tests/test_stage6p_operations.py`
-- `documentation/STAGE_6P_NOTIFICATION_OPERATIONS.md`
+- `app/services/secure_notification_operations.py`
+- `tests/test_stage6s_secure_ui.py`
+- `documentation/STAGE_6S_NOTIFICATION_UI_INTEGRATION.md`
+- `README.md`
 
-Commit: `Stage 6P - Add notification operations dashboard and recovery controls`
+Commit message:
 
-Do not merge into `main`.
+`Stage 6S - Integrate secure notification operations into UI`
 
-**Integration note:** Add the UI to the authenticated navigation and enforce role permissions before exposing recovery actions. The service itself scopes all operations by organization ID.
+Do not merge into `main` yet.
