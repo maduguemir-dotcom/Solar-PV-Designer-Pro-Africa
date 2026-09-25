@@ -1,27 +1,8 @@
-# Solar PV Designer Pro Africa™ — Stage 6W
+# Solar PV Designer Pro Africa™ — Stage 6X
 
-## Notification Administration Workspace Integration
+Stage-only package: Production Administration Access Control Integration.
 
-Stage-only package providing the integration boundary for the notification
-operations administration workspace.
+Upload the files to the existing `development-v3.0` branch. Do not replace unrelated project files and do not merge into `main` yet.
 
-### Files
-
-```text
-app/services/notification_admin_integration.py
-app/ui/notification_admin_workspace.py
-tests/test_stage6w_admin_integration.py
-documentation/STAGE_6W_ADMIN_WORKSPACE_INTEGRATION.md
-README.md
-```
-
-Upload these files into the existing `development-v3.0` project after Stage 6V.
-The package intentionally does not overwrite the host application's main admin
-navigation file; the existing admin entry point should call the supplied
-`NotificationAdminIntegration`.
-
-### Commit
-
-`Stage 6W - Integrate notification operations into admin workspace`
-
-Do not merge into `main` yet.
+Commit message:
+`Stage 6X - Integrate production administration access control`
