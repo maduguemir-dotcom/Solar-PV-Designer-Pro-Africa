@@ -14,9 +14,12 @@ def render_notification_admin_workspace(
     audit_history_renderer=None,
     recovery_renderer=None,
     health_service=None,
+    actor=None,
 ):
     if not organization_id:
         raise ValueError("organization_id is required")
+    if not actor or not actor.get("actor_user_id"):
+        raise PermissionError("authorized actor context is required")
     if not callable(health_renderer):
         raise TypeError("health_renderer must be callable")
 
