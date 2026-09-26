@@ -8,10 +8,10 @@ class NotificationAdminIntegration:
 
     def __init__(self, *, health_service, health_renderer, access=None,
                  reliability_renderer=None, audit_history_renderer=None,
-                 recovery_renderer=None):
+                 recovery_renderer=None, security_audit=None):
         self.health_service = health_service
         self.health_renderer = health_renderer
-        self.access = access or NotificationAdminAccess()
+        self.access = access or NotificationAdminAccess(security_audit=security_audit)
         self.reliability_renderer = reliability_renderer
         self.audit_history_renderer = audit_history_renderer
         self.recovery_renderer = recovery_renderer
