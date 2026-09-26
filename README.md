@@ -1,23 +1,20 @@
-# Solar PV Designer Pro Africa™ — Stage 7B
+# Solar PV Designer Pro Africa™ — Stage 7C
 
-**Stage:** 7B — Reliability Service Separation & Regression Repair  
-**Branch:** `development-v3.0`  
-**Package type:** Stage-Only ZIP
+Stage-only package: notification administration integration readiness gate.
 
-## Upload these files
+## Files
 
-- `app/services/notification_reliability_service.py`
-- `app/services/notification_audit_analytics_service.py`
-- `tests/test_stage6u_reliability.py`
-- `tests/test_stage6w_admin_integration.py`
-- `tests/test_stage7b_regression_repair.py`
-- `documentation/STAGE_7B_RELIABILITY_SERVICE_REPAIR.md`
+- `app/services/notification_integration_readiness.py`
+- `tests/test_stage7c_readiness.py`
+- `documentation/STAGE_7C_INTEGRATION_READINESS.md`
 - `README.md`
 
-Commit message:
+## Validate
 
-```text
-Stage 7B - Separate queue reliability and audit analytics services
+From the repository root, run:
+
+```bash
+PYTHONPATH=. pytest -q tests/test_stage7c_readiness.py
 ```
 
-Do not merge into `main` yet. After uploading, run the focused regression command documented in `documentation/STAGE_7B_RELIABILITY_SERVICE_REPAIR.md` from the repository root.
+This is a static readiness checker. It does not replace actual entry-point integration or a full staging test.
