@@ -1,27 +1,18 @@
-# Solar PV Designer Pro Africa™ — Stage 6Z
+# Solar PV Designer Pro Africa™ — Stage 7A
 
-**Stage 6Z: End-to-End Notification Security & Administration Test Suite**
-
-This Stage-Only package contains the integration test suite and documentation for
-validating the notification administration security chain from Stages 6S–6Y.
+Stage 7A is a **documentation-only production readiness audit**. It does not replace or modify application source code.
 
 ## Files
 
-- `tests/test_stage6z_security_chain.py`
-- `documentation/STAGE_6Z_SECURITY_CHAIN_TESTING.md`
-- `README.md`
+- `documentation/STAGE_7A_PRODUCTION_READINESS_AUDIT.md` — audit scope, findings, validation, and release gate.
+- `documentation/STAGE_7A_REMEDIATION_BACKLOG.md` — prioritized fixes and acceptance criteria.
 
-## Install
+## GitHub upload
 
-Extract the ZIP at the repository root or upload these files to the existing
-`development-v3.0` branch. Do not replace unchanged files from earlier stages.
+Upload these files to `development-v3.0`.
 
-## Test
+Suggested commit:
 
-```bash
-PYTHONPATH=. pytest -q tests/test_stage6z_security_chain.py
-```
+`Stage 7A - Add production readiness audit and remediation backlog`
 
-This package expects the Stage 6S–6Y modules to already exist in the branch.
-Keep working on `development-v3.0`; do not merge into `main` until the full suite
-and staging checks are complete.
+Do not merge into `main` until the P1 findings in the audit are resolved and the complete test suite passes in a provisioned environment.
