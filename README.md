@@ -1,18 +1,23 @@
-# Solar PV Designer Pro Africa™ — Stage 7A
+# Solar PV Designer Pro Africa™ — Stage 7B
 
-Stage 7A is a **documentation-only production readiness audit**. It does not replace or modify application source code.
+**Stage:** 7B — Reliability Service Separation & Regression Repair  
+**Branch:** `development-v3.0`  
+**Package type:** Stage-Only ZIP
 
-## Files
+## Upload these files
 
-- `documentation/STAGE_7A_PRODUCTION_READINESS_AUDIT.md` — audit scope, findings, validation, and release gate.
-- `documentation/STAGE_7A_REMEDIATION_BACKLOG.md` — prioritized fixes and acceptance criteria.
+- `app/services/notification_reliability_service.py`
+- `app/services/notification_audit_analytics_service.py`
+- `tests/test_stage6u_reliability.py`
+- `tests/test_stage6w_admin_integration.py`
+- `tests/test_stage7b_regression_repair.py`
+- `documentation/STAGE_7B_RELIABILITY_SERVICE_REPAIR.md`
+- `README.md`
 
-## GitHub upload
+Commit message:
 
-Upload these files to `development-v3.0`.
+```text
+Stage 7B - Separate queue reliability and audit analytics services
+```
 
-Suggested commit:
-
-`Stage 7A - Add production readiness audit and remediation backlog`
-
-Do not merge into `main` until the P1 findings in the audit are resolved and the complete test suite passes in a provisioned environment.
+Do not merge into `main` yet. After uploading, run the focused regression command documented in `documentation/STAGE_7B_RELIABILITY_SERVICE_REPAIR.md` from the repository root.
