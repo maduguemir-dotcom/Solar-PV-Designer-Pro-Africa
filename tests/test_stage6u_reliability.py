@@ -1,4 +1,4 @@
-from app.services.notification_reliability_service import NotificationReliabilityService
+from app.services.notification_audit_analytics_service import NotificationReliabilityService
 
 
 class FakeAudit:
