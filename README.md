@@ -1,20 +1,24 @@
-# Solar PV Designer Pro Africa™ — Stage 7C
+# Solar PV Designer Pro Africa™ — Stage 7D
 
-Stage-only package: notification administration integration readiness gate.
+**Stage 7D: Main Application Integration**
 
-## Files
+This Stage-Only ZIP connects the notification administration workspace to the existing Streamlit navigation and wires its health, audit history, reliability, and secure recovery views through the existing authentication and organization membership system.
 
-- `app/services/notification_integration_readiness.py`
-- `tests/test_stage7c_readiness.py`
-- `documentation/STAGE_7C_INTEGRATION_READINESS.md`
-- `README.md`
+## Upload
 
-## Validate
+Upload the files in this ZIP to your `stage-7d-integration` branch, preserving directory paths. Review the diff before committing. Do not modify or merge into `main` directly.
 
-From the repository root, run:
+Suggested commit message:
 
-```bash
-PYTHONPATH=. pytest -q tests/test_stage7c_readiness.py
+```text
+Stage 7D - Integrate notification administration into main app
 ```
 
-This is a static readiness checker. It does not replace actual entry-point integration or a full staging test.
+## Test
+
+```powershell
+python -m pytest -q tests/test_stage7d_main_integration.py
+python -m py_compile app/main.py app/ui/notification_admin_entry.py app/services/durable_audit_service.py
+```
+
+See `documentation/STAGE_7D_MAIN_APPLICATION_INTEGRATION.md` for integration details and manual verification steps.
