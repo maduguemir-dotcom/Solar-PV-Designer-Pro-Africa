@@ -66,6 +66,7 @@ from ui.billing import render_billing_ui
 from ui.email_delivery import render_email_delivery_ui
 from ui.email_settings import render_email_settings_ui
 from ui.notification_preferences import render_notification_preferences_ui
+from ui.notification_admin_entry import render_notification_admin_page
 from ui.quotations import render_quotation_ui
 from ui.subscription import render_subscription_ui
 from ui.company_profile import render_company_profile_ui
@@ -436,11 +437,27 @@ app_page = st.sidebar.radio(
         "⚙️ Email Provider Settings",
         "🔔 Notification Preferences",
 
+        "🛡️ Notification Administration",
+
     ],
 
     key="main_application_navigation",
 
 )
+
+
+# ==========================================================
+# SECTION 6A - NOTIFICATION ADMINISTRATION WORKSPACE
+# ==========================================================
+
+if app_page == "🛡️ Notification Administration":
+
+    try:
+        render_notification_admin_page()
+    except Exception as error:
+        st.error("The Notification Administration workspace could not be loaded.")
+        st.exception(error)
+    st.stop()
 
 
 # ==========================================================
