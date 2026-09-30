@@ -14,7 +14,7 @@ from app.services.notification_admin_security_audit import NotificationAdminSecu
 from app.services.secure_notification_operations import SecureNotificationOperations
 from app.services.notification_security_service import NotificationSecurityService
 from app.services.notification_audit_history_service import NotificationAuditHistoryService
-from app.services.notification_reliability_service import NotificationReliabilityService
+from app.services.notification_audit_analytics_service import NotificationReliabilityService
 from app.services.notification_health_service import NotificationHealthService
 
 
