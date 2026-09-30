@@ -37,5 +37,6 @@ class DurableAuditService:
 
     def list_events(self, organization_id, limit=100):
         conn = self._conn()
-        return conn.execute("""SELECT * FROM notification_audit_events
+        rows = conn.execute("""SELECT * FROM notification_audit_events
             WHERE organization_id=? ORDER BY id DESC LIMIT ?""", (organization_id, int(limit))).fetchall()
+        return [dict(row) for row in rows]
